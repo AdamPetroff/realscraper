@@ -153,6 +153,11 @@ export class RealityScraper {
               ]),
             };
 
+            if (!property.area) {
+              // if area not found use the last part of location ("{street}, {area}")
+              property.area = property.location.split(",").pop()?.trim();
+            }
+
             if (property.title === "prodej" || property.price) {
               properties.push(property);
             }
