@@ -31,16 +31,6 @@ export class PropertyScheduler {
       throw new Error("Failed to connect to Telegram");
     }
     console.log("✅ Telegram connected");
-
-    this.runDailyScrape(
-      {
-        priceMin: 6000000,
-        priceMax: 8000000,
-        rooms: "2k|21|3k|31",
-        areaMin: 50,
-      },
-      "6-8M CZK"
-    );
   }
 
   startScheduler(): void {
