@@ -94,7 +94,6 @@ export class TelegramService {
 
   private async sendPropertyImages(properties: Property[]): Promise<void> {
     const mediaItems = this.buildMediaItems(properties);
-    console.log("mediaItems", mediaItems);
     if (mediaItems.length === 0) {
       return;
     }
@@ -118,7 +117,6 @@ export class TelegramService {
     return properties
       .slice(0, 10)
       .map((property, index) => {
-        console.log("property", property);
         const imageUrl = property.images?.find(Boolean);
 
         if (!imageUrl) {

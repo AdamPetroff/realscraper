@@ -94,12 +94,22 @@ export class SrealityScraper extends BaseScraper {
 
   private async handleCookieConsent(page: Page): Promise<void> {
     try {
-      const consentButton = await page.$("aria/Souhlasím");
+      const consentButton =
+        (await page.$("aria/Souhlasím")) || (await page.$("aria/Agree"));
 
       if (!consentButton) {
         console.log("SrealityScraper: Cookie consent button not found.");
         return;
       }
+
+      console.log(
+        "consentButton1",
+        await (await page.$("aria/Souhlasím"))?.evaluate((el) => el.textContent)
+      );
+      console.log(
+        "consentButton2",
+        await (await page.$("aria/Agree"))?.evaluate((el) => el.textContent)
+      );
 
       await consentButton?.click();
 
