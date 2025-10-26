@@ -1,7 +1,8 @@
 import * as cheerio from "cheerio";
-import type { Element } from "domhandler";
+import { type Element } from "domhandler";
 import type { Page } from "puppeteer";
 import type { Property } from "../types";
+import { TelegramService } from "../telegram-service";
 import { BaseScraper } from "./BaseScraper";
 import type { ScrapeOptions } from "./scraper.interface";
 
@@ -10,7 +11,10 @@ type SrealityScrapeOptions = ScrapeOptions & {
 };
 
 export class SrealityScraper extends BaseScraper {
-  constructor(private readonly defaultOptions: SrealityScrapeOptions = {}) {
+  constructor(
+    private readonly defaultOptions: SrealityScrapeOptions = {},
+    private readonly telegramService?: TelegramService
+  ) {
     super();
   }
 
@@ -95,6 +99,16 @@ export class SrealityScraper extends BaseScraper {
 
   private async handleCookieConsent(page: Page): Promise<void> {
     try {
+      if (this.telegramService) {
+        const screenshot = await page.screenshot();
+        if (screenshot) {
+          await this.telegramService.sendPhoto(
+            Buffer.from(screenshot),
+            "Sreality cookie consent"
+          );
+        }
+      }
+
       const consentButton =
         (await page.$("aria/Souhlasím")) || (await page.$("aria/Agree"));
 
