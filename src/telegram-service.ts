@@ -1,5 +1,5 @@
 import TelegramBot from "node-telegram-bot-api";
-import { Property } from "./types";
+import type { Property } from "./types";
 
 export class TelegramService {
   private bot: TelegramBot;
@@ -89,6 +89,15 @@ export class TelegramService {
     } catch (error) {
       console.error("❌ Error sending Telegram message:", error);
       throw error;
+    }
+  }
+
+  async sendPhoto(photo: Buffer | string, caption?: string): Promise<void> {
+    try {
+      await this.bot.sendPhoto(this.chatId, photo, { caption });
+      console.log("✅ Telegram photo sent successfully");
+    } catch (error) {
+      console.error("❌ Error sending Telegram photo:", error);
     }
   }
 

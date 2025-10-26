@@ -1,15 +1,20 @@
 import * as cheerio from "cheerio";
-import { Page } from "puppeteer";
-import { Property } from "../types";
+import { type Element } from "domhandler";
+import type { Page } from "puppeteer";
+import type { Property } from "../types";
+import { TelegramService } from "../telegram-service";
 import { BaseScraper } from "./BaseScraper";
-import { ScrapeOptions } from "./scraper.interface";
+import type { ScrapeOptions } from "./scraper.interface";
 
 type SrealityScrapeOptions = ScrapeOptions & {
   newOnly?: boolean;
 };
 
 export class SrealityScraper extends BaseScraper {
-  constructor(private readonly defaultOptions: SrealityScrapeOptions = {}) {
+  constructor(
+    private readonly defaultOptions: SrealityScrapeOptions = {},
+    private readonly telegramService?: TelegramService
+  ) {
     super();
   }
 
@@ -126,7 +131,7 @@ export class SrealityScraper extends BaseScraper {
     await new Promise((resolve) => setTimeout(resolve, ms));
   }
 
-  private extractTitle($item: cheerio.Cheerio<any>): string {
+  private extractTitle($item: cheerio.Cheerio<Element>): string {
     const inlineTitle = $item.find("a p").first().text().trim();
     if (inlineTitle) {
       return inlineTitle;
@@ -143,7 +148,7 @@ export class SrealityScraper extends BaseScraper {
     return this.extractText($item, selectors);
   }
 
-  private extractPrice($item: cheerio.Cheerio<any>): string {
+  private extractPrice($item: cheerio.Cheerio<Element>): string {
     const inlinePrice = $item.find("p.css-ca9wwd").first().text().trim();
     if (inlinePrice) {
       return inlinePrice.replace(/\s+/g, " ");
@@ -162,7 +167,7 @@ export class SrealityScraper extends BaseScraper {
     return priceText.replace(/\s+/g, " ").trim();
   }
 
-  private extractLocation($item: cheerio.Cheerio<any>): string {
+  private extractLocation($item: cheerio.Cheerio<Element>): string {
     const inlineLocation = $item.find("a p").eq(1).text().trim();
     if (inlineLocation) {
       return inlineLocation;
@@ -177,7 +182,7 @@ export class SrealityScraper extends BaseScraper {
     return this.extractText($item, selectors);
   }
 
-  private extractArea($item: cheerio.Cheerio<any>): string | undefined {
+  private extractArea($item: cheerio.Cheerio<Element>): string | undefined {
     const sourceText =
       this.extractTitle($item) || $item.find("a p").text() || $item.text();
     const match = sourceText.match(/(\d+(?:[.,]\d+)?)\s*m²?/i);
@@ -187,7 +192,7 @@ export class SrealityScraper extends BaseScraper {
     return `${match[1]} m²`;
   }
 
-  private extractRooms($item: cheerio.Cheerio<any>): string {
+  private extractRooms($item: cheerio.Cheerio<Element>): string {
     const title = this.extractTitle($item);
     const dispositionMatch = title.match(/\d+\s*\+(?:\s*kk|\s*\d)/i);
     if (dispositionMatch) {
@@ -203,7 +208,9 @@ export class SrealityScraper extends BaseScraper {
     return this.extractText($item, selectors);
   }
 
-  private extractDescription($item: cheerio.Cheerio<any>): string | undefined {
+  private extractDescription(
+    $item: cheerio.Cheerio<Element>
+  ): string | undefined {
     const selectors = [
       ".description",
       ".perex",
@@ -214,7 +221,7 @@ export class SrealityScraper extends BaseScraper {
     return desc || undefined;
   }
 
-  private extractPropertyUrl($item: cheerio.Cheerio<any>): string {
+  private extractPropertyUrl($item: cheerio.Cheerio<Element>): string {
     const link = $item.find("a").first().attr("href");
     if (!link) {
       return "";
@@ -232,7 +239,7 @@ export class SrealityScraper extends BaseScraper {
   }
 
   private extractPropertyImages(
-    $item: cheerio.Cheerio<any>,
+    $item: cheerio.Cheerio<Element>,
     $: cheerio.CheerioAPI
   ): string[] {
     const images: string[] = [];
@@ -263,7 +270,7 @@ export class SrealityScraper extends BaseScraper {
     return Array.from(new Set(images));
   }
 
-  private detectIsNew($item: cheerio.Cheerio<any>): boolean {
+  private detectIsNew($item: cheerio.Cheerio<Element>): boolean {
     const text = $item.text().toLowerCase();
     if (text.includes("nový") || text.includes("new")) {
       return true;

@@ -24,10 +24,10 @@ export class PropertyScheduler {
   private srealityConfig: SrealityScraperConfig;
 
   constructor(telegramToken: string, chatId: string) {
+    this.telegram = new TelegramService(telegramToken, chatId);
     this.idnesScraper = new IdnesScraper();
     this.bezrealitkyScraper = new BezrealitkyScraper();
-    this.srealityScraper = new SrealityScraper();
-    this.telegram = new TelegramService(telegramToken, chatId);
+    this.srealityScraper = new SrealityScraper({}, this.telegram);
     this.config = {
       ...DEFAULT_IDNES_CONFIG,
       articleAge: "1", // Only get properties from last 1 day
