@@ -41,25 +41,26 @@ export class TelegramService {
       : `🏠 <b>Daily Property Update</b>\n\n`;
     const count = `Found <b>${properties.length}</b> new properties:\n\n`;
 
-    const propertiesList = properties
-      .slice(0, 10)
-      .map((property, index) => {
-        const title = this.escapeHtml(property.title || "No title");
-        const price = this.escapeHtml(property.price || "N/A");
-        const location = this.escapeHtml(
-          property.area || property.location || "N/A"
-        );
-        const url = this.escapeHtml(property.url);
+    const propertiesList = "";
+    // const propertiesList = properties
+    //   .slice(0, 10)
+    //   .map((property, index) => {
+    //     const title = this.escapeHtml(property.title || "No title");
+    //     const price = this.escapeHtml(property.price || "N/A");
+    //     const location = this.escapeHtml(
+    //       property.area || property.location || "N/A"
+    //     );
+    //     const url = this.escapeHtml(property.url);
 
-        return [
-          `<b>${index + 1}. ${title}</b>`,
-          `💰 ${price}`,
-          `📍 ${location}`,
-          `🔗 <a href="${url}">View Details</a>`,
-          "",
-        ].join("\n");
-      })
-      .join("\n");
+    //     return [
+    //       `<b>${index + 1}. ${title}</b>`,
+    //       `💰 ${price}`,
+    //       `📍 ${location}`,
+    //       `🔗 <a href="${url}">View Details</a>`,
+    //       "",
+    //     ].join("\n");
+    //   })
+    //   .join("\n");
 
     const footer =
       properties.length > 10
@@ -93,13 +94,18 @@ export class TelegramService {
 
   private async sendPropertyImages(properties: Property[]): Promise<void> {
     const mediaItems = this.buildMediaItems(properties);
-
+    console.log("mediaItems", mediaItems);
     if (mediaItems.length === 0) {
       return;
     }
 
     try {
-      await this.bot.sendMediaGroup(this.chatId, mediaItems);
+      for (const mediaItem of mediaItems) {
+        await this.bot.sendPhoto(this.chatId, mediaItem.media, {
+          caption: mediaItem.caption,
+          parse_mode: "HTML",
+        });
+      }
       console.log("✅ Telegram property images sent successfully");
     } catch (error) {
       console.error("❌ Error sending Telegram media group:", error);
@@ -112,6 +118,7 @@ export class TelegramService {
     return properties
       .slice(0, 10)
       .map((property, index) => {
+        console.log("property", property);
         const imageUrl = property.images?.find(Boolean);
 
         if (!imageUrl) {

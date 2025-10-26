@@ -89,3 +89,71 @@ export function buildIdnesUrl(config: IdnesScraperConfig): string {
 
   return `${baseUrl}/${priceRange}/${config.city}/?${params.toString()}`;
 }
+
+export interface SrealityScraperConfig {
+  offerType: string; // e.g., "prodej" or "pronajem"
+  category: string; // e.g., "byty"
+  locationSlug: string; // e.g., "brno" or "jihomoravsky-kraj/brno"
+  sizes?: string[]; // e.g., ["2+1", "2+kk", "3+1", "3+kk"]
+  ownership?: string; // e.g., "osobni"
+  age?: string; // e.g., "den", "tyden", "mesic"
+  priceMin?: number;
+  priceMax?: number;
+  areaMin?: number;
+  areaMax?: number;
+  page?: number;
+  newOnly?: boolean;
+}
+
+export const DEFAULT_SREALITY_CONFIG: SrealityScraperConfig = {
+  offerType: "prodej",
+  category: "byty",
+  locationSlug: "brno",
+  sizes: ["2+1", "2+kk", "3+1", "3+kk"],
+  ownership: "osobni",
+  age: "tyden",
+  priceMax: 6_000_000,
+  newOnly: false,
+};
+
+export function buildSrealityUrl(config: SrealityScraperConfig): string {
+  const sanitizedLocation = config.locationSlug.replace(/^\/+|\/+$/g, "");
+  const baseUrl = `https://www.sreality.cz/hledani/${config.offerType}/${config.category}/${sanitizedLocation}`;
+
+  const params = new URLSearchParams();
+
+  if (config.sizes && config.sizes.length > 0) {
+    params.set("velikost", config.sizes.join(","));
+  }
+
+  if (config.ownership) {
+    params.set("vlastnictvi", config.ownership);
+  }
+
+  if (typeof config.priceMin === "number") {
+    params.set("cena-od", config.priceMin.toString());
+  }
+
+  if (typeof config.priceMax === "number") {
+    params.set("cena-do", config.priceMax.toString());
+  }
+
+  if (typeof config.areaMin === "number") {
+    params.set("plocha-od", config.areaMin.toString());
+  }
+
+  if (typeof config.areaMax === "number") {
+    params.set("plocha-do", config.areaMax.toString());
+  }
+
+  if (config.age) {
+    params.set("stari", config.age);
+  }
+
+  if (typeof config.page === "number" && config.page > 1) {
+    params.set("strana", config.page.toString());
+  }
+
+  const query = params.toString();
+  return query ? `${baseUrl}?${query}` : baseUrl;
+}

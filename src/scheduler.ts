@@ -1,26 +1,32 @@
 import * as cron from "node-cron";
-import { IdnesScraper, BezrealitkyScraper } from "./scrapers";
+import { IdnesScraper, BezrealitkyScraper, SrealityScraper } from "./scrapers";
 import { TelegramService } from "./telegram-service";
 import {
   DEFAULT_BEZREALITKY_CONFIG,
   DEFAULT_IDNES_CONFIG,
+  DEFAULT_SREALITY_CONFIG,
   buildIdnesUrl,
   buildBezrealitkyUrl,
-  IdnesScraperConfig,
-  BezrealitkyScraperConfig,
+  buildSrealityUrl,
+  type IdnesScraperConfig,
+  type BezrealitkyScraperConfig,
+  type SrealityScraperConfig,
 } from "./config";
-import { Property } from "./types";
+import type { Property } from "./types";
 
 export class PropertyScheduler {
   private idnesScraper: IdnesScraper;
   private bezrealitkyScraper: BezrealitkyScraper;
+  private srealityScraper: SrealityScraper;
   private telegram: TelegramService;
   private config: IdnesScraperConfig;
   private bezrealitkyConfig: BezrealitkyScraperConfig;
+  private srealityConfig: SrealityScraperConfig;
 
   constructor(telegramToken: string, chatId: string) {
     this.idnesScraper = new IdnesScraper();
     this.bezrealitkyScraper = new BezrealitkyScraper();
+    this.srealityScraper = new SrealityScraper();
     this.telegram = new TelegramService(telegramToken, chatId);
     this.config = {
       ...DEFAULT_IDNES_CONFIG,
@@ -30,12 +36,16 @@ export class PropertyScheduler {
       ...DEFAULT_BEZREALITKY_CONFIG,
       newOnly: true,
     };
+    this.srealityConfig = {
+      ...DEFAULT_SREALITY_CONFIG,
+    };
   }
 
   async initialize(): Promise<void> {
     await this.idnesScraper.initialize();
     await this.bezrealitkyScraper.initialize();
-    console.log("✅ Initialized scrapers (IDNES & Bezrealitky)");
+    await this.srealityScraper.initialize();
+    console.log("✅ Initialized scrapers (IDNES, Bezrealitky & Sreality)");
 
     const connected = await this.telegram.testConnection();
     if (!connected) {
@@ -65,9 +75,10 @@ export class PropertyScheduler {
 
   async runDailyScrape(): Promise<void> {
     try {
-      const defaultLabel = "Daily Property Update – IDNES (3-6M CZK)";
-      const highRangeLabel = "Daily Property Update – IDNES (6-8M CZK)";
-      const bezrealitkyLabel = "Daily Property Update – Bezrealitky (new only)";
+      const defaultLabel = "IDNES (3-6M CZK)";
+      const highRangeLabel = "IDNES (6-8M CZK)";
+      const bezrealitkyLabel = "Bezrealitky (≤6M CZK)";
+      const srealityLabel = "Sreality (≤6M CZK)";
 
       const defaultIdnesProperties = await this.scrapeIdnes(
         this.config,
@@ -102,6 +113,15 @@ export class PropertyScheduler {
       await this.telegram.sendPropertiesUpdate(
         bezrealitkyProperties,
         bezrealitkyLabel
+      );
+
+      const srealityProperties = await this.scrapeSreality(
+        srealityLabel,
+        this.srealityConfig
+      );
+      await this.telegram.sendPropertiesUpdate(
+        srealityProperties,
+        srealityLabel
       );
 
       console.log("✅ Combined daily scrape completed successfully");
@@ -157,9 +177,30 @@ export class PropertyScheduler {
     }
   }
 
+  private async scrapeSreality(
+    label: string,
+    config: SrealityScraperConfig
+  ): Promise<Property[]> {
+    try {
+      const url = buildSrealityUrl(config);
+      console.log(`🔍 [${label}] Scraping Sreality URL: ${url}`);
+      const properties = await this.srealityScraper.scrapeProperties(url, {
+        newOnly: config.newOnly,
+      });
+      console.log(
+        `📊 [${label}] Sreality returned ${properties.length} properties`
+      );
+      return properties;
+    } catch (error) {
+      console.error(`❌ [${label}] Error during Sreality scrape:`, error);
+      return [];
+    }
+  }
+
   async close(): Promise<void> {
     await this.idnesScraper.close();
     await this.bezrealitkyScraper.close();
+    await this.srealityScraper.close();
     console.log("✅ Scheduler closed");
   }
 }

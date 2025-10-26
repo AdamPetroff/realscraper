@@ -9,7 +9,8 @@
 		"build": "tsc",
 		"dev": "ts-node-dev --respawn --transpile-only src/index.ts",
 		"manual-scrape": "ts-node --transpile-only scripts/manual-scrape.ts",
-		"manual-scrape-bezrealitky": "ts-node --transpile-only scripts/manual-scrape-bezrealitky.ts"
+		"manual-scrape-bezrealitky": "ts-node --transpile-only scripts/manual-scrape-bezrealitky.ts",
+		"manual-scrape-sreality": "ts-node --transpile-only scripts/manual-scrape-sreality.ts"
 	},
 	"dependencies": {
 		"cheerio": "^1.0.0-rc.12",
