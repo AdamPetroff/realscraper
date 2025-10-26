@@ -99,15 +99,17 @@ export class SrealityScraper extends BaseScraper {
 
   private async handleCookieConsent(page: Page): Promise<void> {
     try {
-      if (this.telegramService) {
-        const screenshot = await page.screenshot();
-        if (screenshot) {
-          await this.telegramService.sendPhoto(
-            Buffer.from(screenshot),
-            "Sreality cookie consent"
-          );
-        }
-      }
+      // if (this.telegramService) {
+      //   const screenshot = await page.screenshot();
+      //   if (screenshot) {
+      //     await this.telegramService.sendPhoto(
+      //       Buffer.from(screenshot),
+      //       "Sreality cookie consent"
+      //     );
+      //   }
+      // }
+
+      await this.delay(7000);
 
       const consentButton =
         (await page.$("aria/Souhlasím")) || (await page.$("aria/Agree"));
