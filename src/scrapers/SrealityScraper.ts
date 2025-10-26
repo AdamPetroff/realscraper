@@ -1,8 +1,7 @@
 import * as cheerio from "cheerio";
-import { type Element } from "domhandler";
+import type { Element } from "domhandler";
 import type { Page } from "puppeteer";
 import type { Property } from "../types";
-import { TelegramService } from "../telegram-service";
 import { BaseScraper } from "./BaseScraper";
 import type { ScrapeOptions } from "./scraper.interface";
 
@@ -11,10 +10,7 @@ type SrealityScrapeOptions = ScrapeOptions & {
 };
 
 export class SrealityScraper extends BaseScraper {
-  constructor(
-    private readonly defaultOptions: SrealityScrapeOptions = {},
-    private readonly telegramService?: TelegramService
-  ) {
+  constructor(private readonly defaultOptions: SrealityScrapeOptions = {}) {
     super();
   }
 
