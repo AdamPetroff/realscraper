@@ -1,34 +1,42 @@
 import * as cron from "node-cron";
-import { IdnesScraper, BaseScraper } from "./scrapers";
+import { IdnesScraper, BezrealitkyScraper } from "./scrapers";
 import { TelegramService } from "./telegram-service";
 import {
+  DEFAULT_BEZREALITKY_URL,
   DEFAULT_IDNES_CONFIG,
   buildIdnesUrl,
   IdnesScraperConfig,
 } from "./config";
+import { Property } from "./types";
 
 export class PropertyScheduler {
-  private scraper: BaseScraper;
+  private idnesScraper: IdnesScraper;
+  private bezrealitkyScraper: BezrealitkyScraper;
   private telegram: TelegramService;
   private config: IdnesScraperConfig;
+  private bezrealitkyUrl: string;
 
   constructor(
     telegramToken: string,
     chatId: string,
-    config?: Partial<IdnesScraperConfig>
+    config?: Partial<IdnesScraperConfig>,
+    bezrealitkyUrl: string = DEFAULT_BEZREALITKY_URL
   ) {
-    this.scraper = new IdnesScraper();
+    this.idnesScraper = new IdnesScraper();
+    this.bezrealitkyScraper = new BezrealitkyScraper();
     this.telegram = new TelegramService(telegramToken, chatId);
     this.config = {
       ...DEFAULT_IDNES_CONFIG,
       articleAge: "1", // Only get properties from last 1 day
       ...config,
     };
+    this.bezrealitkyUrl = bezrealitkyUrl;
   }
 
   async initialize(): Promise<void> {
-    await this.scraper.initialize();
-    console.log("✅ Scraper initialized");
+    await this.idnesScraper.initialize();
+    await this.bezrealitkyScraper.initialize();
+    console.log("✅ Initialized scrapers (IDNES & Bezrealitky)");
 
     const connected = await this.telegram.testConnection();
     if (!connected) {
@@ -38,12 +46,11 @@ export class PropertyScheduler {
   }
 
   startScheduler(): void {
-    // Schedule for 6 PM every day (18:00) - default price range
     cron.schedule(
       "0 18 * * *",
       async () => {
         console.log(
-          "🕕 Starting daily property scraping at 6 PM (3-6M CZK)..."
+          "🕕 Starting combined daily property scraping at 6 PM (Prague time)..."
         );
         await this.runDailyScrape();
       },
@@ -52,66 +59,61 @@ export class PropertyScheduler {
       }
     );
 
-    // Schedule for 6:05 PM every day (18:05) - higher price range 6-8M CZK
-    cron.schedule(
-      "1 18 * * *",
-      async () => {
-        console.log(
-          "🕕 Starting daily property scraping at 6:05 PM (6-8M CZK)..."
-        );
-        await this.runDailyScrape(
-          {
-            priceMin: 6000000,
-            priceMax: 8000000,
-            rooms: "2k|21|3k|31",
-            areaMin: 50,
-          },
-          "6-8M CZK"
-        );
-      },
-      {
-        timezone: "Europe/Prague", // Czech timezone
-      }
-    );
-
     console.log(
-      "⏰ Scheduler started - jobs scheduled for 6:00 PM (3-6M CZK) and 6:05 PM (6-8M CZK) (Prague time)"
+      "⏰ Scheduler started - job scheduled for 6:00 PM (Prague time)"
     );
   }
 
-  async runDailyScrape(
-    configOverride?: Partial<IdnesScraperConfig>,
-    contextLabel = "default"
-  ): Promise<void> {
+  async runDailyScrape(): Promise<void> {
     try {
-      const effectiveConfig: IdnesScraperConfig = {
-        ...this.config,
-        ...configOverride,
-      };
+      const defaultLabel = "Daily Property Update – IDNES (3-6M CZK)";
+      const highRangeLabel = "Daily Property Update – IDNES (6-8M CZK)";
+      const bezrealitkyLabel = "Daily Property Update – Bezrealitky (new only)";
 
-      const url = buildIdnesUrl(effectiveConfig);
-      console.log(`🔍 [${contextLabel}] Scraping URL: ${url}`);
-
-      const properties = await this.scraper.scrapeProperties(url);
-      console.log(
-        `📊 [${contextLabel}] Found ${properties.length} properties from last day`
+      const defaultIdnesProperties = await this.scrapeIdnes(
+        this.config,
+        defaultLabel
+      );
+      await this.telegram.sendPropertiesUpdate(
+        defaultIdnesProperties,
+        defaultLabel
       );
 
-      await this.telegram.sendPropertiesUpdate(properties);
+      const highRangeConfig: IdnesScraperConfig = {
+        ...this.config,
+        priceMin: 6000000,
+        priceMax: 8000000,
+        rooms: "2k|21|3k|31",
+        areaMin: 50,
+      };
 
-      console.log(`✅ [${contextLabel}] Daily scrape completed successfully`);
+      const highRangeIdnesProperties = await this.scrapeIdnes(
+        highRangeConfig,
+        highRangeLabel
+      );
+      await this.telegram.sendPropertiesUpdate(
+        highRangeIdnesProperties,
+        highRangeLabel
+      );
+
+      const bezrealitkyProperties = await this.scrapeBezrealitky(
+        bezrealitkyLabel
+      );
+      await this.telegram.sendPropertiesUpdate(
+        bezrealitkyProperties,
+        bezrealitkyLabel
+      );
+
+      console.log("✅ Combined daily scrape completed successfully");
     } catch (error) {
-      console.error(`❌ [${contextLabel}] Error during daily scrape:`, error);
+      console.error("❌ Error during combined daily scrape:", error);
 
       try {
         await this.telegram.sendMessage(
           "❌ Error occurred during daily property scraping. Please check the logs."
         );
       } catch (telegramError) {
-        console.error(
-          `❌ [${contextLabel}] Failed to send error notification:`,
-          telegramError
-        );
+        console.error("❌ Failed to send error notification:", telegramError);
       }
     }
   }
@@ -122,8 +124,41 @@ export class PropertyScheduler {
     await this.runDailyScrape();
   }
 
+  private async scrapeIdnes(
+    config: IdnesScraperConfig,
+    label: string
+  ): Promise<Property[]> {
+    const idnesUrl = buildIdnesUrl(config);
+    console.log(`🔍 [${label}] Scraping IDNES URL: ${idnesUrl}`);
+    const properties = await this.idnesScraper.scrapeProperties(idnesUrl);
+    console.log(`📊 [${label}] IDNES returned ${properties.length} properties`);
+    return properties;
+  }
+
+  private async scrapeBezrealitky(label: string): Promise<Property[]> {
+    try {
+      console.log(
+        `🔍 [${label}] Scraping Bezrealitky URL: ${this.bezrealitkyUrl}`
+      );
+      const properties = await this.bezrealitkyScraper.scrapeProperties(
+        this.bezrealitkyUrl,
+        {
+          newOnly: true,
+        }
+      );
+      console.log(
+        `📊 [${label}] Bezrealitky returned ${properties.length} properties`
+      );
+      return properties;
+    } catch (error) {
+      console.error(`❌ [${label}] Error during Bezrealitky scrape:`, error);
+      return [];
+    }
+  }
+
   async close(): Promise<void> {
-    await this.scraper.close();
+    await this.idnesScraper.close();
+    await this.bezrealitkyScraper.close();
     console.log("✅ Scheduler closed");
   }
 }

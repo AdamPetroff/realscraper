@@ -22,6 +22,9 @@ export const DEFAULT_IDNES_CONFIG: IdnesScraperConfig = {
   articleAge: "1", // Properties from last 1 day
 };
 
+export const DEFAULT_BEZREALITKY_URL =
+  "https://www.bezrealitky.cz/vyhledat?disposition=DISP_2_1&disposition=DISP_2_KK&disposition=DISP_3_1&disposition=DISP_3_KK&estateType=BYT&location=exact&offerType=PRODEJ&osm_value=Brno-m%C4%9Bsto,+Jihomoravsk%C3%BD+kraj,+Jihov%C3%BDchod,+%C4%8Cesko&priceFrom=3000000&priceTo=7000000&regionOsmIds=R442273&currency=CZK";
+
 export function buildIdnesUrl(config: IdnesScraperConfig): string {
   const baseUrl = "https://reality.idnes.cz/s/prodej/byty";
   const priceRange = `cena-nad-${config.priceMin}-do-${config.priceMax}`;

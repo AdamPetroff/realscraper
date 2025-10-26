@@ -1,7 +1,7 @@
 import puppeteer, { Browser, Page } from "puppeteer";
 import * as cheerio from "cheerio";
 import { Property } from "../types";
-import { IScraper } from "./scraper.interface";
+import { IScraper, ScrapeOptions } from "./scraper.interface";
 
 export abstract class BaseScraper implements IScraper {
   protected browser: Browser | null = null;
@@ -23,7 +23,10 @@ export abstract class BaseScraper implements IScraper {
     });
   }
 
-  abstract scrapeProperties(url: string): Promise<Property[]>;
+  abstract scrapeProperties(
+    url: string,
+    options?: ScrapeOptions
+  ): Promise<Property[]>;
 
   protected async getPage(url: string): Promise<Page> {
     if (!this.browser) {
@@ -89,6 +92,23 @@ export abstract class BaseScraper implements IScraper {
       return `${base.protocol}//${base.host}${link}`;
     }
     return link;
+  }
+
+  protected extractImages(
+    $item: cheerio.Cheerio<any>,
+    selectors: string[],
+    $: cheerio.CheerioAPI
+  ): string[] {
+    const images: string[] = [];
+    for (const selector of selectors) {
+      $item.find(selector).each((_, element) => {
+        const src = $(element).attr("src");
+        if (src && src.startsWith("http")) {
+          images.push(src);
+        }
+      });
+    }
+    return images;
   }
 
   async close(): Promise<void> {

@@ -1,6 +1,6 @@
 import "dotenv/config";
 import { PropertyScheduler } from "./scheduler";
-import { IdnesScraperConfig } from "./config";
+import { DEFAULT_BEZREALITKY_URL, IdnesScraperConfig } from "./config";
 
 async function main(): Promise<void> {
   // Validate environment variables
@@ -47,7 +47,14 @@ async function main(): Promise<void> {
     config: cleanConfig,
   });
 
-  const scheduler = new PropertyScheduler(telegramToken, chatId, cleanConfig);
+  const bezrealitkyUrl = process.env.BEZREALITKY_URL || DEFAULT_BEZREALITKY_URL;
+
+  const scheduler = new PropertyScheduler(
+    telegramToken,
+    chatId,
+    cleanConfig,
+    bezrealitkyUrl
+  );
 
   try {
     await scheduler.initialize();

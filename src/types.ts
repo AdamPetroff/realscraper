@@ -7,4 +7,5 @@ export interface Property {
   url: string;
   description?: string;
   images?: string[];
+  isNew?: boolean;
 }

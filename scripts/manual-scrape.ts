@@ -1,5 +1,9 @@
-import { RealityScraper } from "../src/scraper";
-import { DEFAULT_CONFIG, buildUrl, ScraperConfig } from "../src/config";
+import { IdnesScraper } from "../src/scrapers/IdnesScraper";
+import {
+  DEFAULT_IDNES_CONFIG,
+  buildIdnesUrl,
+  IdnesScraperConfig,
+} from "../src/config";
 import { Property } from "../src/types";
 
 async function logProperty(property: Property, index: number): Promise<void> {
@@ -20,15 +24,15 @@ async function logProperty(property: Property, index: number): Promise<void> {
 }
 
 async function main(): Promise<void> {
-  const scraper = new RealityScraper();
+  const scraper = new IdnesScraper();
 
   try {
     console.log("Initializing scraper...");
     await scraper.initialize();
 
     // You can modify these constants to adjust the search parameters
-    const config: ScraperConfig = {
-      ...DEFAULT_CONFIG,
+    const config: IdnesScraperConfig = {
+      ...DEFAULT_IDNES_CONFIG,
       // Uncomment and modify any of these to override defaults:
       // priceMin: 2000000,
       // priceMax: 5000000,
@@ -38,7 +42,7 @@ async function main(): Promise<void> {
       // roomCount: 4
     };
 
-    const url = buildUrl(config);
+    const url = buildIdnesUrl(config);
     console.log(`\nScraping URL: ${url}`);
     console.log(`Search parameters:
       - Price range: ${config.priceMin.toLocaleString()} - ${config.priceMax.toLocaleString()} CZK

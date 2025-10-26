@@ -1,9 +1,13 @@
 import * as cheerio from "cheerio";
 import { Property } from "../types";
 import { BaseScraper } from "./BaseScraper";
+import { ScrapeOptions } from "./scraper.interface";
 
 export class IdnesScraper extends BaseScraper {
-  async scrapeProperties(url: string): Promise<Property[]> {
+  async scrapeProperties(
+    url: string,
+    _options?: ScrapeOptions
+  ): Promise<Property[]> {
     if (!this.browser) {
       throw new Error("Scraper not initialized. Call initialize() first.");
     }
@@ -35,6 +39,7 @@ export class IdnesScraper extends BaseScraper {
             rooms: this.extractText($item, [".c-products__info .rooms"]),
             url: this.extractUrl($item, url),
             description: this.extractText($item, [".c-products__description"]),
+            images: this.extractImages($item, ["img"], $),
           };
 
           if (!property.area) {

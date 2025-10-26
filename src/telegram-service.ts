@@ -10,18 +10,35 @@ export class TelegramService {
     this.chatId = chatId;
   }
 
-  async sendPropertiesUpdate(properties: Property[]): Promise<void> {
+  async sendPropertiesUpdate(
+    properties: Property[],
+    contextLabel?: string
+  ): Promise<void> {
     if (properties.length === 0) {
-      await this.sendMessage("🏠 No new properties found today.");
+      await this.sendMessage(this.buildEmptyMessage(contextLabel));
       return;
     }
 
-    const message = this.formatPropertiesMessage(properties);
-    await this.sendMessage(message);
+    const summaryMessage = this.buildSummaryMessage(properties, contextLabel);
+    await this.sendMessage(summaryMessage);
+    await this.sendPropertyImages(properties);
   }
 
-  private formatPropertiesMessage(properties: Property[]): string {
-    const header = `🏠 <b>Daily Property Update</b>\n\n`;
+  private buildEmptyMessage(contextLabel?: string): string {
+    const title = contextLabel
+      ? `🏠 <b>${this.escapeHtml(contextLabel)}</b>\n\n`
+      : `🏠 <b>Daily Property Update</b>\n\n`;
+
+    return `${title}No new properties found today.`;
+  }
+
+  private buildSummaryMessage(
+    properties: Property[],
+    contextLabel?: string
+  ): string {
+    const title = contextLabel
+      ? `🏠 <b>${this.escapeHtml(contextLabel)}</b>\n\n`
+      : `🏠 <b>Daily Property Update</b>\n\n`;
     const count = `Found <b>${properties.length}</b> new properties:\n\n`;
 
     const propertiesList = properties
@@ -32,12 +49,13 @@ export class TelegramService {
         const location = this.escapeHtml(
           property.area || property.location || "N/A"
         );
+        const url = this.escapeHtml(property.url);
 
         return [
           `<b>${index + 1}. ${title}</b>`,
           `💰 ${price}`,
           `📍 ${location}`,
-          `🔗 <a href="${property.url}">View Details</a>`,
+          `🔗 <a href="${url}">View Details</a>`,
           "",
         ].join("\n");
       })
@@ -48,14 +66,16 @@ export class TelegramService {
         ? `\n<i>... and ${properties.length - 10} more properties</i>`
         : "";
 
-    return header + count + propertiesList + footer;
+    return title + count + propertiesList + footer;
   }
 
   private escapeHtml(text: string): string {
     return text
       .replace(/&/g, "&amp;")
       .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;");
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
   }
 
   async sendMessage(message: string): Promise<void> {
@@ -69,6 +89,61 @@ export class TelegramService {
       console.error("❌ Error sending Telegram message:", error);
       throw error;
     }
+  }
+
+  private async sendPropertyImages(properties: Property[]): Promise<void> {
+    const mediaItems = this.buildMediaItems(properties);
+
+    if (mediaItems.length === 0) {
+      return;
+    }
+
+    try {
+      await this.bot.sendMediaGroup(this.chatId, mediaItems);
+      console.log("✅ Telegram property images sent successfully");
+    } catch (error) {
+      console.error("❌ Error sending Telegram media group:", error);
+    }
+  }
+
+  private buildMediaItems(
+    properties: Property[]
+  ): TelegramBot.InputMediaPhoto[] {
+    return properties
+      .slice(0, 10)
+      .map((property, index) => {
+        const imageUrl = property.images?.find(Boolean);
+
+        if (!imageUrl) {
+          return null;
+        }
+
+        const captionBody = this.formatPropertyCaption(property, index);
+
+        return {
+          type: "photo" as const,
+          media: imageUrl,
+          caption: captionBody,
+          parse_mode: "HTML" as const,
+        };
+      })
+      .filter((item) => item !== null);
+  }
+
+  private formatPropertyCaption(property: Property, index: number): string {
+    const title = this.escapeHtml(property.title || "No title");
+    const price = this.escapeHtml(property.price || "N/A");
+    const location = this.escapeHtml(
+      property.area || property.location || "N/A"
+    );
+    const url = this.escapeHtml(property.url);
+
+    return [
+      `<b>${index + 1}. ${title}</b>`,
+      `💰 ${price}`,
+      `📍 ${location}`,
+      `🔗 <a href="${url}">View Details</a>`,
+    ].join("\n");
   }
 
   async testConnection(): Promise<boolean> {
