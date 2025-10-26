@@ -96,7 +96,7 @@ export interface SrealityScraperConfig {
   locationSlug: string; // e.g., "brno" or "jihomoravsky-kraj/brno"
   sizes?: string[]; // e.g., ["2+1", "2+kk", "3+1", "3+kk"]
   ownership?: string; // e.g., "osobni"
-  age?: string; // e.g., "den", "tyden", "mesic"
+  age?: "dnes" | "tyden" | "mesic"; // e.g., "den", "tyden", "mesic"
   priceMin?: number;
   priceMax?: number;
   areaMin?: number;
@@ -111,7 +111,7 @@ export const DEFAULT_SREALITY_CONFIG: SrealityScraperConfig = {
   locationSlug: "brno",
   sizes: ["2+1", "2+kk", "3+1", "3+kk"],
   ownership: "osobni",
-  age: "tyden",
+  age: "dnes",
   priceMax: 6_000_000,
   newOnly: false,
 };
