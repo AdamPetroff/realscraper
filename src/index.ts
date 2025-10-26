@@ -1,6 +1,6 @@
 import "dotenv/config";
 import { PropertyScheduler } from "./scheduler";
-import { ScraperConfig } from "./config";
+import { IdnesScraperConfig } from "./config";
 
 async function main(): Promise<void> {
   // Validate environment variables
@@ -18,7 +18,7 @@ async function main(): Promise<void> {
   }
 
   // Optional: Override default config with environment variables
-  const config: Partial<ScraperConfig> = {
+  const config: Partial<IdnesScraperConfig> = {
     priceMin: process.env.PRICE_MIN
       ? parseInt(process.env.PRICE_MIN)
       : undefined,
@@ -38,7 +38,7 @@ async function main(): Promise<void> {
   // Remove undefined values
   const cleanConfig = Object.fromEntries(
     Object.entries(config).filter(([_, value]) => value !== undefined)
-  ) as Partial<ScraperConfig>;
+  ) as Partial<IdnesScraperConfig>;
 
   console.log("🚀 Starting Reality Scraper Bot...");
   console.log("Configuration:", {

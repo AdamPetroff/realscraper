@@ -1,4 +1,4 @@
-export interface ScraperConfig {
+export interface IdnesScraperConfig {
   priceMin: number;
   priceMax: number;
   city: string;
@@ -10,7 +10,7 @@ export interface ScraperConfig {
   articleAge?: string; // 1 / 7 / 31
 }
 
-export const DEFAULT_CONFIG: ScraperConfig = {
+export const DEFAULT_IDNES_CONFIG: IdnesScraperConfig = {
   priceMin: 3000000,
   priceMax: 6000000,
   city: "brno",
@@ -22,7 +22,7 @@ export const DEFAULT_CONFIG: ScraperConfig = {
   articleAge: "1", // Properties from last 1 day
 };
 
-export function buildUrl(config: ScraperConfig): string {
+export function buildIdnesUrl(config: IdnesScraperConfig): string {
   const baseUrl = "https://reality.idnes.cz/s/prodej/byty";
   const priceRange = `cena-nad-${config.priceMin}-do-${config.priceMax}`;
 

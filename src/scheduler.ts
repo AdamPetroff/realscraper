@@ -1,22 +1,26 @@
 import * as cron from "node-cron";
-import { RealityScraper } from "./scraper";
+import { IdnesScraper, BaseScraper } from "./scrapers";
 import { TelegramService } from "./telegram-service";
-import { DEFAULT_CONFIG, buildUrl, ScraperConfig } from "./config";
+import {
+  DEFAULT_IDNES_CONFIG,
+  buildIdnesUrl,
+  IdnesScraperConfig,
+} from "./config";
 
 export class PropertyScheduler {
-  private scraper: RealityScraper;
+  private scraper: BaseScraper;
   private telegram: TelegramService;
-  private config: ScraperConfig;
+  private config: IdnesScraperConfig;
 
   constructor(
     telegramToken: string,
     chatId: string,
-    config?: Partial<ScraperConfig>
+    config?: Partial<IdnesScraperConfig>
   ) {
-    this.scraper = new RealityScraper();
+    this.scraper = new IdnesScraper();
     this.telegram = new TelegramService(telegramToken, chatId);
     this.config = {
-      ...DEFAULT_CONFIG,
+      ...DEFAULT_IDNES_CONFIG,
       articleAge: "1", // Only get properties from last 1 day
       ...config,
     };
@@ -76,16 +80,16 @@ export class PropertyScheduler {
   }
 
   async runDailyScrape(
-    configOverride?: Partial<ScraperConfig>,
+    configOverride?: Partial<IdnesScraperConfig>,
     contextLabel = "default"
   ): Promise<void> {
     try {
-      const effectiveConfig: ScraperConfig = {
+      const effectiveConfig: IdnesScraperConfig = {
         ...this.config,
         ...configOverride,
       };
 
-      const url = buildUrl(effectiveConfig);
+      const url = buildIdnesUrl(effectiveConfig);
       console.log(`🔍 [${contextLabel}] Scraping URL: ${url}`);
 
       const properties = await this.scraper.scrapeProperties(url);
