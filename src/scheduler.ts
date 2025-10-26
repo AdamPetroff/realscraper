@@ -2,10 +2,12 @@ import * as cron from "node-cron";
 import { IdnesScraper, BezrealitkyScraper } from "./scrapers";
 import { TelegramService } from "./telegram-service";
 import {
-  DEFAULT_BEZREALITKY_URL,
+  DEFAULT_BEZREALITKY_CONFIG,
   DEFAULT_IDNES_CONFIG,
   buildIdnesUrl,
+  buildBezrealitkyUrl,
   IdnesScraperConfig,
+  BezrealitkyScraperConfig,
 } from "./config";
 import { Property } from "./types";
 
@@ -14,23 +16,20 @@ export class PropertyScheduler {
   private bezrealitkyScraper: BezrealitkyScraper;
   private telegram: TelegramService;
   private config: IdnesScraperConfig;
-  private bezrealitkyUrl: string;
+  private bezrealitkyConfig: BezrealitkyScraperConfig;
 
-  constructor(
-    telegramToken: string,
-    chatId: string,
-    config?: Partial<IdnesScraperConfig>,
-    bezrealitkyUrl: string = DEFAULT_BEZREALITKY_URL
-  ) {
+  constructor(telegramToken: string, chatId: string) {
     this.idnesScraper = new IdnesScraper();
     this.bezrealitkyScraper = new BezrealitkyScraper();
     this.telegram = new TelegramService(telegramToken, chatId);
     this.config = {
       ...DEFAULT_IDNES_CONFIG,
       articleAge: "1", // Only get properties from last 1 day
-      ...config,
     };
-    this.bezrealitkyUrl = bezrealitkyUrl;
+    this.bezrealitkyConfig = {
+      ...DEFAULT_BEZREALITKY_CONFIG,
+      newOnly: true,
+    };
   }
 
   async initialize(): Promise<void> {
@@ -97,7 +96,8 @@ export class PropertyScheduler {
       );
 
       const bezrealitkyProperties = await this.scrapeBezrealitky(
-        bezrealitkyLabel
+        bezrealitkyLabel,
+        this.bezrealitkyConfig
       );
       await this.telegram.sendPropertiesUpdate(
         bezrealitkyProperties,
@@ -135,15 +135,16 @@ export class PropertyScheduler {
     return properties;
   }
 
-  private async scrapeBezrealitky(label: string): Promise<Property[]> {
+  private async scrapeBezrealitky(
+    label: string,
+    config: BezrealitkyScraperConfig
+  ): Promise<Property[]> {
     try {
-      console.log(
-        `🔍 [${label}] Scraping Bezrealitky URL: ${this.bezrealitkyUrl}`
-      );
+      console.log(`🔍 [${label}] Scraping Bezrealitky URL`);
       const properties = await this.bezrealitkyScraper.scrapeProperties(
-        this.bezrealitkyUrl,
+        buildBezrealitkyUrl(config),
         {
-          newOnly: true,
+          newOnly: config.newOnly,
         }
       );
       console.log(

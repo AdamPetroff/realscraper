@@ -22,8 +22,57 @@ export const DEFAULT_IDNES_CONFIG: IdnesScraperConfig = {
   articleAge: "1", // Properties from last 1 day
 };
 
-export const DEFAULT_BEZREALITKY_URL =
-  "https://www.bezrealitky.cz/vyhledat?disposition=DISP_2_1&disposition=DISP_2_KK&disposition=DISP_3_1&disposition=DISP_3_KK&estateType=BYT&location=exact&offerType=PRODEJ&osm_value=Brno-m%C4%9Bsto,+Jihomoravsk%C3%BD+kraj,+Jihov%C3%BDchod,+%C4%8Cesko&priceFrom=3000000&priceTo=7000000&regionOsmIds=R442273&currency=CZK";
+export interface BezrealitkyScraperConfig {
+  newOnly?: boolean;
+  dispositions: string[]; // e.g., ["DISP_2_1", "DISP_2_KK", "DISP_3_1", "DISP_3_KK"]
+  estateType: string; // e.g., "BYT"
+  offerType: string; // e.g., "PRODEJ"
+  location: string; // e.g., "exact"
+  osmValue: string; // e.g., "Brno-město, Jihomoravský kraj, Jihovýchod, Česko"
+  regionOsmIds: string; // e.g., "R442273"
+  priceFrom: number;
+  priceTo: number;
+  currency: string; // e.g., "CZK"
+}
+
+export const DEFAULT_BEZREALITKY_CONFIG: BezrealitkyScraperConfig = {
+  dispositions: ["DISP_2_1", "DISP_2_KK", "DISP_3_1", "DISP_3_KK"],
+  estateType: "BYT",
+  offerType: "PRODEJ",
+  location: "exact",
+  osmValue: "Brno-město, Jihomoravský kraj, Jihovýchod, Česko",
+  regionOsmIds: "R442273",
+  priceFrom: 3_000_000,
+  priceTo: 6_000_000,
+  currency: "CZK",
+};
+
+export function buildBezrealitkyUrl(config: BezrealitkyScraperConfig): string {
+  const baseUrl = "https://www.bezrealitky.cz/vyhledat";
+  const params = new URLSearchParams();
+
+  // Add disposition parameters (can have multiple)
+  config.dispositions.forEach((disp) => {
+    params.append("disposition", disp);
+  });
+
+  // Add other parameters
+  params.append("estateType", config.estateType);
+  params.append("location", config.location);
+  params.append("offerType", config.offerType);
+  params.append("osm_value", config.osmValue);
+  params.append("priceFrom", config.priceFrom.toString());
+  params.append("priceTo", config.priceTo.toString());
+  params.append("regionOsmIds", config.regionOsmIds);
+  params.append("currency", config.currency);
+
+  return `${baseUrl}?${params.toString()}`;
+}
+
+// Keep for backward compatibility
+export const DEFAULT_BEZREALITKY_URL = buildBezrealitkyUrl(
+  DEFAULT_BEZREALITKY_CONFIG
+);
 
 export function buildIdnesUrl(config: IdnesScraperConfig): string {
   const baseUrl = "https://reality.idnes.cz/s/prodej/byty";

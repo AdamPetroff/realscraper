@@ -1,5 +1,9 @@
 import { BezrealitkyScraper } from "../src/scrapers";
-import { DEFAULT_BEZREALITKY_URL } from "../src/config";
+import {
+  DEFAULT_BEZREALITKY_CONFIG,
+  BezrealitkyScraperConfig,
+  buildBezrealitkyUrl,
+} from "../src/config";
 import { Property } from "../src/types";
 import { ScrapeOptions } from "../src/scrapers/scraper.interface";
 
@@ -29,9 +33,35 @@ function parseCli(): { url: string; options: ScrapeOptions } {
   const rawArgs = process.argv.slice(2);
 
   const options: ScrapeOptions = {};
+
+  // Allow custom URL as first argument for backward compatibility
   const urlArg = rawArgs.find((arg) => !arg.startsWith("--"));
-  const targetUrl =
-    urlArg || process.env.BEZREALITKY_URL || DEFAULT_BEZREALITKY_URL;
+
+  let targetUrl: string;
+  if (urlArg) {
+    targetUrl = urlArg;
+  } else {
+    // Build URL from config (with optional env overrides)
+    const config: BezrealitkyScraperConfig = {
+      ...DEFAULT_BEZREALITKY_CONFIG,
+      ...(process.env.BEZREALITKY_DISPOSITIONS
+        ? { dispositions: process.env.BEZREALITKY_DISPOSITIONS.split(",") }
+        : {}),
+      ...(process.env.BEZREALITKY_PRICE_FROM
+        ? { priceFrom: parseInt(process.env.BEZREALITKY_PRICE_FROM) }
+        : {}),
+      ...(process.env.BEZREALITKY_PRICE_TO
+        ? { priceTo: parseInt(process.env.BEZREALITKY_PRICE_TO) }
+        : {}),
+      ...(process.env.BEZREALITKY_OSM_VALUE
+        ? { osmValue: process.env.BEZREALITKY_OSM_VALUE }
+        : {}),
+      ...(process.env.BEZREALITKY_REGION_OSM_IDS
+        ? { regionOsmIds: process.env.BEZREALITKY_REGION_OSM_IDS }
+        : {}),
+    };
+    targetUrl = buildBezrealitkyUrl(config);
+  }
 
   if (
     rawArgs.includes("--new-only") ||
@@ -65,7 +95,10 @@ async function main(): Promise<void> {
         "- The website requires additional authentication or has anti-bot measures"
       );
       console.log(
-        "\nTry adjusting the search parameters via the URL or BEZREALITKY_URL env variable."
+        "\nTry adjusting the search parameters via the URL argument or BEZREALITKY_* env variables."
+      );
+      console.log(
+        "Available env vars: BEZREALITKY_DISPOSITIONS, BEZREALITKY_PRICE_FROM, BEZREALITKY_PRICE_TO, etc."
       );
     } else {
       for (let i = 0; i < properties.length; i++) {

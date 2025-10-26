@@ -1,6 +1,6 @@
 import "dotenv/config";
 import { PropertyScheduler } from "./scheduler";
-import { DEFAULT_BEZREALITKY_URL, IdnesScraperConfig } from "./config";
+import { IdnesScraperConfig, BezrealitkyScraperConfig } from "./config";
 
 async function main(): Promise<void> {
   // Validate environment variables
@@ -17,44 +17,13 @@ async function main(): Promise<void> {
     process.exit(1);
   }
 
-  // Optional: Override default config with environment variables
-  const config: Partial<IdnesScraperConfig> = {
-    priceMin: process.env.PRICE_MIN
-      ? parseInt(process.env.PRICE_MIN)
-      : undefined,
-    priceMax: process.env.PRICE_MAX
-      ? parseInt(process.env.PRICE_MAX)
-      : undefined,
-    city: process.env.CITY || undefined,
-    rooms: process.env.ROOMS || undefined,
-    areaMin: process.env.AREA_MIN ? parseInt(process.env.AREA_MIN) : undefined,
-    ownership: process.env.OWNERSHIP || undefined,
-    material: process.env.MATERIAL || undefined,
-    roomCount: process.env.ROOM_COUNT
-      ? parseInt(process.env.ROOM_COUNT)
-      : undefined,
-  };
-
-  // Remove undefined values
-  const cleanConfig = Object.fromEntries(
-    Object.entries(config).filter(([_, value]) => value !== undefined)
-  ) as Partial<IdnesScraperConfig>;
-
   console.log("🚀 Starting Reality Scraper Bot...");
   console.log("Configuration:", {
     telegramToken: "***" + telegramToken.slice(-4),
     chatId,
-    config: cleanConfig,
   });
 
-  const bezrealitkyUrl = process.env.BEZREALITKY_URL || DEFAULT_BEZREALITKY_URL;
-
-  const scheduler = new PropertyScheduler(
-    telegramToken,
-    chatId,
-    cleanConfig,
-    bezrealitkyUrl
-  );
+  const scheduler = new PropertyScheduler(telegramToken, chatId);
 
   try {
     await scheduler.initialize();
