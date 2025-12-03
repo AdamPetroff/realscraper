@@ -1,7 +1,6 @@
 import * as cheerio from "cheerio";
 import { Property } from "../types";
-import { BaseScraper } from "./BaseScraper";
-import { ScrapeOptions } from "./scraper.interface";
+import { IScraper, ScrapeOptions } from "./scraper.interface";
 
 type ApolloCache = Record<string, any>;
 
@@ -20,88 +19,104 @@ const DISPOSITION_MAP: Record<string, string> = {
   DISP_6_KK: "6+kk",
 };
 
-export class BezrealitkyScraper extends BaseScraper {
-  constructor(private readonly defaultOptions: ScrapeOptions = {}) {
-    super();
+const USER_AGENT =
+  "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
+
+export class BezrealitkyScraper implements IScraper {
+  constructor(private readonly defaultOptions: ScrapeOptions = {}) {}
+
+  // No-op methods for compatibility with BaseScraper interface
+  async initialize(): Promise<void> {
+    // No browser to initialize - using native fetch
+  }
+
+  async close(): Promise<void> {
+    // No browser to close - using native fetch
   }
 
   async scrapeProperties(
     url: string,
     options?: ScrapeOptions
   ): Promise<Property[]> {
-    if (!this.browser) {
-      throw new Error("Scraper not initialized. Call initialize() first.");
-    }
-
     const effectiveOptions: ScrapeOptions = {
       ...this.defaultOptions,
       ...options,
     };
 
-    const page = await this.getPage(url);
+    console.log(`BezrealitkyScraper: Fetching ${url}`);
+
+    const response = await fetch(url, {
+      headers: {
+        "User-Agent": USER_AGENT,
+        Accept:
+          "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+        "Accept-Language": "cs,en-US;q=0.7,en;q=0.3",
+        "Cache-Control": "no-cache",
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(
+        `BezrealitkyScraper: Failed to fetch ${url}: ${response.status} ${response.statusText}`
+      );
+    }
+
+    const html = await response.text();
+    const $ = cheerio.load(html);
+
+    const scriptContent = $("#__NEXT_DATA__").html();
+
+    if (!scriptContent) {
+      console.warn("BezrealitkyScraper: __NEXT_DATA__ not found in page.");
+      return [];
+    }
+
+    let apolloCache: ApolloCache | undefined;
 
     try {
-      const html = await page.content();
-      const $ = cheerio.load(html);
+      const data = JSON.parse(scriptContent);
+      apolloCache = data?.props?.pageProps?.apolloCache as ApolloCache;
+    } catch (error) {
+      console.error(
+        "BezrealitkyScraper: Failed to parse __NEXT_DATA__ JSON",
+        error
+      );
+      return [];
+    }
 
-      const scriptContent = $("#__NEXT_DATA__").html();
+    if (!apolloCache) {
+      console.warn("BezrealitkyScraper: apolloCache missing in __NEXT_DATA__");
+      return [];
+    }
 
-      if (!scriptContent) {
-        console.warn("BezrealitkyScraper: __NEXT_DATA__ not found in page.");
-        return [];
+    const advertRefs = this.extractAdvertRefs(apolloCache);
+
+    if (advertRefs.length === 0) {
+      console.warn("BezrealitkyScraper: No advert references found in cache.");
+      return [];
+    }
+
+    const properties: Property[] = [];
+    const newOnly = effectiveOptions.newOnly ?? false;
+
+    for (const ref of advertRefs) {
+      const advert = apolloCache[ref];
+      if (!advert) {
+        continue;
       }
 
-      let apolloCache: ApolloCache | undefined;
-
-      try {
-        const data = JSON.parse(scriptContent);
-        apolloCache = data?.props?.pageProps?.apolloCache as ApolloCache;
-      } catch (error) {
-        console.error(
-          "BezrealitkyScraper: Failed to parse __NEXT_DATA__ JSON",
-          error
-        );
-        return [];
-      }
-
-      if (!apolloCache) {
-        console.warn(
-          "BezrealitkyScraper: apolloCache missing in __NEXT_DATA__"
-        );
-        return [];
-      }
-
-      const advertRefs = this.extractAdvertRefs(apolloCache);
-
-      if (advertRefs.length === 0) {
-        console.warn(
-          "BezrealitkyScraper: No advert references found in cache."
-        );
-        return [];
-      }
-
-      const properties: Property[] = [];
-      const newOnly = effectiveOptions.newOnly ?? false;
-
-      for (const ref of advertRefs) {
-        const advert = apolloCache[ref];
-        if (!advert) {
+      const property = this.transformAdvert(advert, apolloCache);
+      if (property) {
+        if (newOnly && !property.isNew) {
           continue;
         }
-
-        const property = this.transformAdvert(advert, apolloCache);
-        if (property) {
-          if (newOnly && !property.isNew) {
-            continue;
-          }
-          properties.push(property);
-        }
+        properties.push(property);
       }
-
-      return properties;
-    } finally {
-      await page.close();
     }
+
+    console.log(`BezrealitkyScraper: Found ${properties.length} properties`);
+
+    return properties;
   }
 
   private extractAdvertRefs(apolloCache: ApolloCache): string[] {
@@ -262,7 +277,7 @@ export class BezrealitkyScraper extends BaseScraper {
     return `https://www.bezrealitky.cz/nemovitosti-byty-domy/${uri}`;
   }
 
-  protected extractImages(
+  private extractImages(
     imageRefs: unknown,
     apolloCache: ApolloCache
   ): string[] {

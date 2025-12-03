@@ -78,9 +78,7 @@ async function main(): Promise<void> {
   const scraper = new BezrealitkyScraper();
 
   try {
-    console.log("Initializing Bezrealitky scraper...");
-    await scraper.initialize();
-
+    console.log("Starting Bezrealitky scraper (using native fetch)...");
     console.log(`\nScraping URL: ${targetUrl}`);
 
     const properties = await scraper.scrapeProperties(targetUrl, options);
@@ -112,8 +110,6 @@ async function main(): Promise<void> {
   } catch (error) {
     console.error("❌ Error running Bezrealitky scraper:", error);
     process.exit(1);
-  } finally {
-    await scraper.close();
   }
 }
 
