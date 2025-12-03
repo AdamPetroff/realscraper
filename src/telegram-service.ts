@@ -104,6 +104,7 @@ export class TelegramService {
   private async sendPropertyImages(properties: Property[]): Promise<void> {
     const mediaItems = this.buildMediaItems(properties);
     if (mediaItems.length === 0) {
+      console.log("❌ No media items to send");
       return;
     }
 

@@ -273,7 +273,11 @@ export class SrealityScraper {
     if (estate.images) {
       for (const img of estate.images) {
         if (img.url) {
-          images.push(img.url.startsWith("//") ? `https:${img.url}` : img.url);
+          images.push(
+            img.url.startsWith("//")
+              ? `https:${img.url}?fl=res,1200,1200,1|wrm,/watermark/sreality.png,10|shr,,20|webp,80`
+              : img.url
+          );
         }
       }
     }
@@ -303,7 +307,8 @@ export class SrealityScraper {
 
     const locality = estate.locality || {};
     const categoryType = estate.categoryTypeCb?.name?.toLowerCase() || "prodej";
-    const categoryMain = estate.categoryMainCb?.name?.toLowerCase() || "byt";
+    let categoryMainRaw = estate.categoryMainCb?.name?.toLowerCase() || "byt";
+    const categoryMain = categoryMainRaw === "byty" ? "byt" : categoryMainRaw;
 
     // Build location part of URL
     let locationSlug = "";
@@ -316,10 +321,7 @@ export class SrealityScraper {
 
     // Map category sub to URL format (e.g., "2+kk" stays as is)
     const categorySubName = estate.categorySubCb?.name || "";
-    const categorySubSlug = categorySubName
-      .toLowerCase()
-      .replace(/\+/g, "-")
-      .replace(/\s+/g, "-");
+    const categorySubSlug = categorySubName.toLowerCase();
 
     // Format: /detail/prodej/byt/2-kk/brno-kralovo-pole/1889518412
     return `https://www.sreality.cz/detail/${categoryType}/${categoryMain}/${categorySubSlug}/${locationSlug}/${estate.id}`;

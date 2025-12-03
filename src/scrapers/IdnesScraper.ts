@@ -127,7 +127,7 @@ export class IdnesScraper {
     const images: string[] = [];
     for (const selector of selectors) {
       $item.find(selector).each((_, element) => {
-        const src = $(element).attr("src");
+        const src = $(element).attr("data-src");
         if (src && src.startsWith("http")) {
           images.push(src);
         }

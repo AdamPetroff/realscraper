@@ -14,6 +14,8 @@ async function logProperty(property: Property, index: number): Promise<void> {
   console.log(`Area: ${property.area || "N/A"}`);
   console.log(`Rooms: ${property.rooms || "N/A"}`);
   console.log(`URL: ${property.url || "N/A"}`);
+  console.log(`Images: ${property.images?.length || 0}`);
+  console.log(`Image 1: ${property.images?.[0] || "N/A"}`);
   if (property.description) {
     console.log(
       `Description: ${property.description.substring(0, 100)}${
@@ -70,6 +72,7 @@ async function main(): Promise<void> {
         "\nTry adjusting the search parameters in the config object."
       );
     } else {
+      console.log(properties);
       for (let i = 0; i < properties.length; i++) {
         await logProperty(properties[i], i);
       }
