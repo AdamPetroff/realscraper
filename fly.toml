@@ -17,6 +17,7 @@ primary_region = 'waw'
   processes = ['app']
 
 [[vm]]
-  memory = '1536mb'
+  memory = '512mb'
   cpu_kind = 'shared'
   cpus = 1
+  memory_mb = 512
