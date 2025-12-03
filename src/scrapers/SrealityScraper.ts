@@ -1,318 +1,347 @@
 import * as cheerio from "cheerio";
-import { type Element } from "domhandler";
-import type { Page } from "puppeteer";
 import type { Property } from "../types";
-import { TelegramService } from "../telegram-service";
-import { BaseScraper } from "./BaseScraper";
+import type { TelegramService } from "../telegram-service";
 import type { ScrapeOptions } from "./scraper.interface";
 
 type SrealityScrapeOptions = ScrapeOptions & {
   newOnly?: boolean;
 };
 
-export class SrealityScraper extends BaseScraper {
+interface SrealityLocality {
+  city?: string;
+  citySeoName?: string;
+  cityPart?: string;
+  cityPartSeoName?: string;
+  district?: string;
+  region?: string;
+  street?: string;
+}
+
+interface SrealityEstate {
+  id: number;
+  name?: string;
+  locality?: SrealityLocality;
+  priceCzk?: number;
+  priceSummaryCzk?: number;
+  priceCzkPerSqM?: number;
+  categoryTypeCb?: { name?: string; value?: number };
+  categoryMainCb?: { name?: string; value?: number };
+  categorySubCb?: { name?: string; value?: number };
+  images?: Array<{ url?: string }>;
+  watchdogBadge?: string;
+  discountShow?: boolean;
+}
+
+interface SrealityApiResponse {
+  pageProps?: {
+    total?: number;
+    dehydratedState?: {
+      queries?: Array<{
+        state?: {
+          data?: {
+            results?: SrealityEstate[];
+            pagination?: { page: number; limit: number; total: number };
+          };
+        };
+      }>;
+    };
+  };
+}
+
+export class SrealityScraper {
+  private buildId: string | null = null;
+
   constructor(
     private readonly defaultOptions: SrealityScrapeOptions = {},
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     private readonly telegramService?: TelegramService
-  ) {
-    super();
+  ) {}
+
+  async initialize(): Promise<void> {
+    // Fetch build ID from the main page
+    await this.fetchBuildId();
+  }
+
+  private async fetchBuildId(): Promise<void> {
+    try {
+      const response = await fetch(
+        "https://www.sreality.cz/hledani/prodej/byty",
+        {
+          headers: this.getHeaders(),
+        }
+      );
+
+      const html = await response.text();
+      const $ = cheerio.load(html);
+
+      // Extract build ID from __NEXT_DATA__
+      const nextDataScript = $("#__NEXT_DATA__").html();
+      if (nextDataScript) {
+        const data = JSON.parse(nextDataScript);
+        this.buildId = data.buildId;
+        console.log(`SrealityScraper: Found build ID: ${this.buildId}`);
+        return;
+      }
+
+      // Fallback: try to find it in script tags
+      const scripts = $('script[src*="/_next/static/"]').toArray();
+      for (const script of scripts) {
+        const src = $(script).attr("src");
+        if (src) {
+          const match = src.match(/\/_next\/static\/([^/]+)\//);
+          if (match) {
+            this.buildId = match[1];
+            console.log(
+              `SrealityScraper: Found build ID from script: ${this.buildId}`
+            );
+            return;
+          }
+        }
+      }
+
+      console.warn(
+        "SrealityScraper: Could not extract build ID, will try without it"
+      );
+    } catch (error) {
+      console.error("SrealityScraper: Failed to fetch build ID:", error);
+    }
+  }
+
+  private getHeaders(referer?: string): Record<string, string> {
+    const headers: Record<string, string> = {
+      "User-Agent":
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+      Accept: "*/*",
+      "Accept-Language": "en-US,en;q=0.5",
+      "Accept-Encoding": "gzip, deflate, br",
+      "x-nextjs-data": "1",
+      Connection: "keep-alive",
+      "Sec-Fetch-Dest": "empty",
+      "Sec-Fetch-Mode": "cors",
+      "Sec-Fetch-Site": "same-origin",
+    };
+
+    if (referer) {
+      headers.Referer = referer;
+    }
+
+    return headers;
   }
 
   async scrapeProperties(
     url: string,
     options?: SrealityScrapeOptions
   ): Promise<Property[]> {
-    if (!this.browser) {
-      throw new Error("Scraper not initialized. Call initialize() first.");
-    }
-
     const effectiveOptions: SrealityScrapeOptions = {
       ...this.defaultOptions,
       ...options,
     };
 
-    const page = await this.getPage(url);
+    // Ensure we have a build ID
+    if (!this.buildId) {
+      await this.fetchBuildId();
+    }
+
+    // Convert user URL to API URL
+    const apiUrl = this.convertToApiUrl(url);
+    console.log(`SrealityScraper: Fetching API URL: ${apiUrl}`);
 
     try {
-      await this.handleCookieConsent(page);
-      await page
-        .waitForSelector("li[id^='estate-list-item-']", { timeout: 15000 })
-        .catch(() => {
-          console.log(
-            "SrealityScraper: Timeout waiting for estate list item selector"
-          );
-        });
-
-      const html = await page.content();
-      const $ = cheerio.load(html);
-
-      const properties: Property[] = [];
-      const newOnly = effectiveOptions.newOnly ?? false;
-
-      const items = $("li[id^='estate-list-item-']");
-      console.log(`SrealityScraper: Found ${items.length} properties`);
-
-      items.each((_, element) => {
-        const $item = $(element);
-
-        const title = this.extractTitle($item);
-        const price = this.extractPrice($item);
-        const location = this.extractLocation($item);
-        const area = this.extractArea($item);
-        const rooms = this.extractRooms($item);
-        const listingUrl = this.extractPropertyUrl($item);
-        const description = this.extractDescription($item);
-        const images = this.extractPropertyImages($item, $);
-        const isNew = this.detectIsNew($item);
-
-        if (!title || !price || !listingUrl) {
-          return;
-        }
-
-        if (newOnly && !isNew) {
-          return;
-        }
-
-        const property: Property = {
-          title,
-          price,
-          location,
-          area,
-          rooms,
-          url: listingUrl,
-          description,
-          isNew,
-        };
-
-        if (images.length > 0) {
-          property.images = images;
-        }
-
-        properties.push(property);
+      const response = await fetch(apiUrl, {
+        headers: this.getHeaders(url),
       });
 
-      return properties;
-    } finally {
-      // await page.close();
-    }
-  }
-
-  private async handleCookieConsent(page: Page): Promise<void> {
-    try {
-      // if (this.telegramService) {
-      //   const screenshot = await page.screenshot();
-      //   if (screenshot) {
-      //     await this.telegramService.sendPhoto(
-      //       Buffer.from(screenshot),
-      //       "Sreality cookie consent"
-      //     );
-      //   }
-      // }
-
-      await this.delay(7000);
-
-      const consentButton =
-        (await page.$("aria/Souhlasím")) || (await page.$("aria/Agree"));
-
-      if (!consentButton) {
-        console.log("SrealityScraper: Cookie consent button not found.");
-        return;
+      if (!response.ok) {
+        console.error(
+          `SrealityScraper: API request failed with status ${response.status}`
+        );
+        // Try to refetch build ID and retry once
+        if (response.status === 404 && this.buildId) {
+          console.log("SrealityScraper: Retrying with fresh build ID...");
+          this.buildId = null;
+          await this.fetchBuildId();
+          const retryUrl = this.convertToApiUrl(url);
+          const retryResponse = await fetch(retryUrl, {
+            headers: this.getHeaders(url),
+          });
+          if (!retryResponse.ok) {
+            throw new Error(`API request failed: ${retryResponse.status}`);
+          }
+          return this.parseResponse(
+            await retryResponse.json(),
+            effectiveOptions
+          );
+        }
+        throw new Error(`API request failed: ${response.status}`);
       }
 
-      console.log(
-        "consentButton1",
-        await (await page.$("aria/Souhlasím"))?.evaluate((el) => el.textContent)
-      );
-      console.log(
-        "consentButton2",
-        await (await page.$("aria/Agree"))?.evaluate((el) => el.textContent)
-      );
-
-      await consentButton?.click();
-
-      console.log(
-        "SrealityScraper: Clicked cookie consent button in shadow DOM."
-      );
-      await this.delay(2000); // Wait for content to reload
+      const data: SrealityApiResponse = await response.json();
+      return this.parseResponse(data, effectiveOptions);
     } catch (error) {
-      console.warn("SrealityScraper: Failed to handle cookie consent", error);
+      console.error("SrealityScraper: Error fetching properties:", error);
+      throw error;
     }
   }
 
-  private async delay(ms: number): Promise<void> {
-    await new Promise((resolve) => setTimeout(resolve, ms));
+  private convertToApiUrl(userUrl: string): string {
+    const url = new URL(userUrl);
+    const pathname = url.pathname; // e.g., /hledani/prodej/byty/brno
+    const searchParams = url.searchParams;
+
+    // Extract slug parts from pathname
+    const pathParts = pathname.split("/").filter(Boolean); // ['hledani', 'prodej', 'byty', 'brno']
+
+    // Build the API URL
+    // Format: /_next/data/{buildId}/cs{pathname}.json?{params}&slug=...&slug=...
+    const buildIdPart = this.buildId || "1.0.425"; // fallback version
+
+    // Add slug parameters for each path part after 'hledani'
+    const slugParts = pathParts.slice(1); // ['prodej', 'byty', 'brno']
+    slugParts.forEach((slug) => {
+      searchParams.append("slug", slug);
+    });
+
+    const apiUrl = `https://www.sreality.cz/_next/data/${buildIdPart}/cs${pathname}.json?${searchParams.toString()}`;
+    return apiUrl;
   }
 
-  private extractTitle($item: cheerio.Cheerio<Element>): string {
-    const inlineTitle = $item.find("a p").first().text().trim();
-    if (inlineTitle) {
-      return inlineTitle;
+  private parseResponse(
+    data: SrealityApiResponse,
+    options: SrealityScrapeOptions
+  ): Property[] {
+    const newOnly = options.newOnly ?? false;
+    const properties: Property[] = [];
+
+    // Extract estates from dehydratedState.queries[].state.data.results
+    const queries = data.pageProps?.dehydratedState?.queries || [];
+    let estates: SrealityEstate[] = [];
+
+    for (const query of queries) {
+      const results = query.state?.data?.results;
+      if (Array.isArray(results) && results.length > 0) {
+        estates = results;
+        break;
+      }
     }
 
-    const selectors = [
-      ".name",
-      ".title",
-      "h2",
-      ".property__title",
-      'span[class*="name"]',
-      "p.css-d7upve",
-    ];
-    return this.extractText($item, selectors);
+    console.log(
+      `SrealityScraper: Found ${estates.length} estates in API response`
+    );
+
+    for (const estate of estates) {
+      const property = this.transformEstate(estate);
+      if (!property) continue;
+
+      if (newOnly && !property.isNew) {
+        continue;
+      }
+
+      properties.push(property);
+    }
+
+    return properties;
   }
 
-  private extractPrice($item: cheerio.Cheerio<Element>): string {
-    const inlinePrice = $item.find("p.css-ca9wwd").first().text().trim();
-    if (inlinePrice) {
-      return inlinePrice.replace(/\s+/g, " ");
+  private transformEstate(estate: SrealityEstate): Property | null {
+    const title = estate.name || "";
+    const locality = estate.locality || {};
+
+    // Build location string
+    const locationParts: string[] = [];
+    if (locality.street) locationParts.push(locality.street);
+    if (locality.cityPart) locationParts.push(locality.cityPart);
+    if (locality.city) locationParts.push(locality.city);
+    const location = locationParts.join(", ");
+
+    // Handle price
+    const priceValue = estate.priceSummaryCzk || estate.priceCzk;
+    const price = priceValue ? this.formatPrice(priceValue) : "";
+
+    // Build URL: https://www.sreality.cz/detail/prodej/byt/2+kk/brno-kralovo-pole/1889518412
+    const url = this.buildListingUrl(estate);
+
+    if (!title || !price || !url) {
+      return null;
     }
 
-    const selectors = [
-      ".price",
-      ".norm-price",
-      'span[class*="price"]',
-      ".property__price",
-    ];
-    const priceText = this.extractText($item, selectors);
-    if (!priceText) {
-      return "";
-    }
-    return priceText.replace(/\s+/g, " ").trim();
-  }
+    // Extract area and rooms from title
+    const area = this.extractArea(title);
+    const rooms = estate.categorySubCb?.name || this.extractRooms(title) || "";
 
-  private extractLocation($item: cheerio.Cheerio<Element>): string {
-    const inlineLocation = $item.find("a p").eq(1).text().trim();
-    if (inlineLocation) {
-      return inlineLocation;
-    }
-
-    const selectors = [
-      ".locality",
-      ".location",
-      'span[class*="locality"]',
-      ".property__location",
-    ];
-    return this.extractText($item, selectors);
-  }
-
-  private extractArea($item: cheerio.Cheerio<Element>): string | undefined {
-    const sourceText =
-      this.extractTitle($item) || $item.find("a p").text() || $item.text();
-    const match = sourceText.match(/(\d+(?:[.,]\d+)?)\s*m²?/i);
-    if (!match) {
-      return undefined;
-    }
-    return `${match[1]} m²`;
-  }
-
-  private extractRooms($item: cheerio.Cheerio<Element>): string {
-    const title = this.extractTitle($item);
-    const dispositionMatch = title.match(/\d+\s*\+(?:\s*kk|\s*\d)/i);
-    if (dispositionMatch) {
-      return dispositionMatch[0].replace(/\s+/g, "");
-    }
-
-    const selectors = [
-      ".layout",
-      ".disposition",
-      'span[class*="layout"]',
-      'span[class*="disposition"]',
-    ];
-    return this.extractText($item, selectors);
-  }
-
-  private extractDescription(
-    $item: cheerio.Cheerio<Element>
-  ): string | undefined {
-    const selectors = [
-      ".description",
-      ".perex",
-      'span[class*="description"]',
-      ".property__description",
-    ];
-    const desc = this.extractText($item, selectors);
-    return desc || undefined;
-  }
-
-  private extractPropertyUrl($item: cheerio.Cheerio<Element>): string {
-    const link = $item.find("a").first().attr("href");
-    if (!link) {
-      return "";
-    }
-
-    if (link.startsWith("http")) {
-      return link;
-    }
-
-    if (link.startsWith("/")) {
-      return `https://www.sreality.cz${link}`;
-    }
-
-    return link;
-  }
-
-  private extractPropertyImages(
-    $item: cheerio.Cheerio<Element>,
-    $: cheerio.CheerioAPI
-  ): string[] {
+    // Extract images
     const images: string[] = [];
-
-    $item.find("img").each((_, img) => {
-      const src =
-        $(img).attr("src") ||
-        $(img).attr("data-src") ||
-        $(img).attr("data-lazy-src");
-      const normalized = this.normalizeImageUrl(src);
-      if (normalized) {
-        images.push(normalized);
+    if (estate.images) {
+      for (const img of estate.images) {
+        if (img.url) {
+          images.push(img.url.startsWith("//") ? `https:${img.url}` : img.url);
+        }
       }
-    });
+    }
 
-    $item.find('[style*="background-image"]').each((_, element) => {
-      const style = $(element).attr("style");
-      if (!style) {
-        return;
-      }
+    // Check if new (watchdogBadge indicates new listings)
+    const isNew = estate.watchdogBadge === "new" || false;
 
-      const match = style.match(/url\(['"]?(https?:\/\/[^'"\s)]+)/i);
-      if (match) {
-        images.push(match[1]);
-      }
-    });
+    const property: Property = {
+      title,
+      price,
+      location,
+      area,
+      rooms,
+      url,
+      isNew,
+    };
 
-    return Array.from(new Set(images));
+    if (images.length > 0) {
+      property.images = images;
+    }
+
+    return property;
   }
 
-  private detectIsNew($item: cheerio.Cheerio<Element>): boolean {
-    const text = $item.text().toLowerCase();
-    if (text.includes("nový") || text.includes("new")) {
-      return true;
+  private buildListingUrl(estate: SrealityEstate): string {
+    if (!estate.id) return "";
+
+    const locality = estate.locality || {};
+    const categoryType = estate.categoryTypeCb?.name?.toLowerCase() || "prodej";
+    const categoryMain = estate.categoryMainCb?.name?.toLowerCase() || "byt";
+
+    // Build location part of URL
+    let locationSlug = "";
+    if (locality.citySeoName) {
+      locationSlug = locality.citySeoName;
+      if (locality.cityPartSeoName) {
+        locationSlug += `-${locality.cityPartSeoName}`;
+      }
     }
 
-    const labelText = $item
-      .find("[data-testid='label-default'], [class*='label'], span")
-      .toArray()
-      .map((el) => cheerio.load(el).root().text().trim().toLowerCase());
+    // Map category sub to URL format (e.g., "2+kk" stays as is)
+    const categorySubName = estate.categorySubCb?.name || "";
+    const categorySubSlug = categorySubName
+      .toLowerCase()
+      .replace(/\+/g, "-")
+      .replace(/\s+/g, "-");
 
-    if (labelText.some((value) => value.includes("novink"))) {
-      return true;
-    }
-
-    return $item.find('[class*="new"]').length > 0;
+    // Format: /detail/prodej/byt/2-kk/brno-kralovo-pole/1889518412
+    return `https://www.sreality.cz/detail/${categoryType}/${categoryMain}/${categorySubSlug}/${locationSlug}/${estate.id}`;
   }
 
-  private normalizeImageUrl(src?: string): string | undefined {
-    if (!src) {
-      return undefined;
-    }
+  private formatPrice(price: number, currency: string = "Kč"): string {
+    const formatter = new Intl.NumberFormat("cs-CZ");
+    return `${formatter.format(price)} ${currency}`;
+  }
 
-    if (src.startsWith("http")) {
-      return src;
-    }
+  private extractArea(title: string): string | undefined {
+    const match = title.match(/(\d+(?:[.,]\d+)?)\s*m²?/i);
+    return match ? `${match[1]} m²` : undefined;
+  }
 
-    if (src.startsWith("//")) {
-      return `https:${src}`;
-    }
+  private extractRooms(title: string): string {
+    const match = title.match(/(\d+\s*\+\s*(?:kk|\d+))/i);
+    return match ? match[1].replace(/\s+/g, "") : "";
+  }
 
-    return undefined;
+  async close(): Promise<void> {
+    // No browser to close - just reset state
+    this.buildId = null;
   }
 }

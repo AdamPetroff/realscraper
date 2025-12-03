@@ -1,21 +1,50 @@
 import * as cheerio from "cheerio";
 import { Property } from "../types";
-import { BaseScraper } from "./BaseScraper";
 import { ScrapeOptions } from "./scraper.interface";
 
-export class IdnesScraper extends BaseScraper {
+export class IdnesScraper {
+  constructor(private readonly defaultOptions: ScrapeOptions = {}) {}
+
+  async initialize(): Promise<void> {
+    // No initialization needed for fetch-based scraper
+  }
+
+  private getHeaders(): Record<string, string> {
+    return {
+      "User-Agent":
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+      Accept:
+        "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+      "Accept-Language": "en-US,en;q=0.5",
+      "Accept-Encoding": "gzip, deflate, br",
+      Connection: "keep-alive",
+      "Upgrade-Insecure-Requests": "1",
+      "Sec-Fetch-Dest": "document",
+      "Sec-Fetch-Mode": "navigate",
+      "Sec-Fetch-Site": "none",
+      "Sec-Fetch-User": "?1",
+    };
+  }
+
   async scrapeProperties(
     url: string,
     _options?: ScrapeOptions
   ): Promise<Property[]> {
-    if (!this.browser) {
-      throw new Error("Scraper not initialized. Call initialize() first.");
-    }
-
-    const page = await this.getPage(url);
+    console.log(`IdnesScraper: Fetching URL: ${url}`);
 
     try {
-      const html = await page.content();
+      const response = await fetch(url, {
+        headers: this.getHeaders(),
+      });
+
+      if (!response.ok) {
+        console.error(
+          `IdnesScraper: Request failed with status ${response.status}`
+        );
+        throw new Error(`Request failed: ${response.status}`);
+      }
+
+      const html = await response.text();
       const $ = cheerio.load(html);
 
       const properties: Property[] = [];
@@ -25,7 +54,7 @@ export class IdnesScraper extends BaseScraper {
 
       if (items.length > 0) {
         console.log(
-          `Found ${items.length} properties using selector: ${propertySelector}`
+          `IdnesScraper: Found ${items.length} properties using selector: ${propertySelector}`
         );
 
         items.each((_, element) => {
@@ -52,15 +81,62 @@ export class IdnesScraper extends BaseScraper {
           }
         });
       } else {
-        console.log(`No properties found with selector: ${propertySelector}`);
+        console.log(
+          `IdnesScraper: No properties found with selector: ${propertySelector}`
+        );
       }
 
       return properties;
     } catch (error) {
-      console.error("Error scraping properties:", error);
+      console.error("IdnesScraper: Error scraping properties:", error);
       throw error;
-    } finally {
-      await page.close();
     }
+  }
+
+  private extractText(
+    $item: cheerio.Cheerio<any>,
+    selectors: string[]
+  ): string {
+    for (const selector of selectors) {
+      const text = $item.find(selector).first().text().trim();
+      if (text) {
+        return text;
+      }
+    }
+    return "";
+  }
+
+  private extractUrl($item: cheerio.Cheerio<any>, baseUrl: string): string {
+    const link = $item.find("a").first().attr("href");
+    if (!link) return "";
+
+    if (link.startsWith("http")) {
+      return link;
+    } else if (link.startsWith("/")) {
+      const base = new URL(baseUrl);
+      return `${base.protocol}//${base.host}${link}`;
+    }
+    return link;
+  }
+
+  private extractImages(
+    $item: cheerio.Cheerio<any>,
+    selectors: string[],
+    $: cheerio.CheerioAPI
+  ): string[] {
+    const images: string[] = [];
+    for (const selector of selectors) {
+      $item.find(selector).each((_, element) => {
+        const src = $(element).attr("src");
+        if (src && src.startsWith("http")) {
+          images.push(src);
+        }
+      });
+    }
+    return images;
+  }
+
+  async close(): Promise<void> {
+    // No resources to clean up
   }
 }

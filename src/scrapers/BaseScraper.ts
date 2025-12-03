@@ -1,8 +1,18 @@
+/**
+ * @deprecated This class is no longer used by the scrapers.
+ * All scrapers now use native fetch() for better performance and reduced resource usage.
+ * Kept for reference or if Puppeteer-based scraping is needed in the future.
+ */
 import puppeteer, { Browser, Page } from "puppeteer";
 import * as cheerio from "cheerio";
 import { Property } from "../types";
 import { IScraper, ScrapeOptions } from "./scraper.interface";
 
+/**
+ * @deprecated Use fetch-based scrapers instead.
+ * BaseScraper using Puppeteer - kept as a fallback for sites that require
+ * JavaScript execution that can't be avoided.
+ */
 export abstract class BaseScraper implements IScraper {
   protected browser: Browser | null = null;
 
