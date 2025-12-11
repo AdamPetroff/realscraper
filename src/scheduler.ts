@@ -101,8 +101,22 @@ export class PropertyScheduler {
       }
     );
 
+    // Bazos scrape at 0:10 (after midnight to catch late-night/midnight listings)
+    cron.schedule(
+      "10 0 * * *",
+      async () => {
+        console.log(
+          "🌅 Starting Bazos property scraping at 0:10 (Prague time)..."
+        );
+        await this.runBazosScrape();
+      },
+      {
+        timezone: "Europe/Prague", // Czech timezone
+      }
+    );
+
     console.log(
-      "⏰ Scheduler started - jobs scheduled for 6:00 PM and 11:50 PM (Prague time)"
+      "⏰ Scheduler started - jobs scheduled for 6:00 PM, 11:50 PM, and 0:10 AM (Prague time)"
     );
   }
 
