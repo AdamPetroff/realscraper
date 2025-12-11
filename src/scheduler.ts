@@ -1,5 +1,10 @@
 import * as cron from "node-cron";
-import { IdnesScraper, BezrealitkyScraper, SrealityScraper, BazosScraper } from "./scrapers";
+import {
+  IdnesScraper,
+  BezrealitkyScraper,
+  SrealityScraper,
+  BazosScraper,
+} from "./scrapers";
 import { TelegramService } from "./telegram-service";
 import {
   DEFAULT_BEZREALITKY_CONFIG,
@@ -56,7 +61,9 @@ export class PropertyScheduler {
     await this.bezrealitkyScraper.initialize();
     await this.srealityScraper.initialize();
     await this.bazosScraper.initialize();
-    console.log("✅ Initialized scrapers (IDNES, Bezrealitky, Sreality & Bazos)");
+    console.log(
+      "✅ Initialized scrapers (IDNES, Bezrealitky, Sreality & Bazos)"
+    );
 
     const connected = await this.telegram.testConnection();
     if (!connected) {
@@ -172,10 +179,7 @@ export class PropertyScheduler {
         bazosLabel,
         this.bazosConfig
       );
-      await this.telegram.sendPropertiesUpdate(
-        bazosProperties,
-        bazosLabel
-      );
+      await this.telegram.sendPropertiesUpdate(bazosProperties, bazosLabel);
 
       console.log("✅ Bazos nightly scrape completed successfully");
     } catch (error) {
@@ -195,6 +199,7 @@ export class PropertyScheduler {
   async runManualScrape(): Promise<void> {
     console.log("🔍 Running manual scrape...");
     await this.runDailyScrape();
+    await this.runBazosScrape();
   }
 
   private async scrapeIdnes(
