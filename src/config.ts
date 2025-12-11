@@ -157,3 +157,73 @@ export function buildSrealityUrl(config: SrealityScraperConfig): string {
   const query = params.toString();
   return query ? `${baseUrl}?${query}` : baseUrl;
 }
+
+// ============================================================================
+// Bazos.cz Configuration
+// ============================================================================
+
+export interface BazosScraperConfig {
+  /**
+   * Location code (hlokalita parameter).
+   * 60200 = Brno-město area code
+   */
+  locationCode: string;
+
+  /**
+   * Search radius in km around the location (humkreis parameter)
+   */
+  radiusKm: number;
+
+  /**
+   * Minimum price filter (cenaod parameter). Empty string for no minimum.
+   */
+  priceMin?: number;
+
+  /**
+   * Maximum price filter (cenado parameter). Empty string for no maximum.
+   */
+  priceMax?: number;
+
+  /**
+   * Category type: "prodam" (for sale) or "pronajmu" (for rent)
+   */
+  offerType: "prodam" | "pronajmu";
+
+  /**
+   * Property type: "byt" (apartment), "dum" (house), etc.
+   */
+  propertyType: string;
+
+  /**
+   * Whether to only include listings from today/yesterday (last ~24h)
+   * Since bazos shows date but not time, we match today and yesterday's dates
+   */
+  recentOnly?: boolean;
+}
+
+export const DEFAULT_BAZOS_CONFIG: BazosScraperConfig = {
+  locationCode: "60200", // Brno-město
+  radiusKm: 10,
+  priceMax: 6_000_000,
+  offerType: "prodam",
+  propertyType: "byt",
+  recentOnly: true,
+};
+
+export function buildBazosUrl(config: BazosScraperConfig): string {
+  const baseUrl = `https://reality.bazos.cz/${config.offerType}/${config.propertyType}/`;
+
+  const params = new URLSearchParams();
+  params.set("hledat", "");
+  params.set("rubriky", "reality");
+  params.set("hlokalita", config.locationCode);
+  params.set("humkreis", config.radiusKm.toString());
+  params.set("cenaod", config.priceMin?.toString() || "");
+  params.set("cenado", config.priceMax?.toString() || "");
+  params.set("Submit", "Hledat");
+  params.set("order", "");
+  params.set("crp", "");
+  params.set("kitx", "ano");
+
+  return `${baseUrl}?${params.toString()}`;
+}
