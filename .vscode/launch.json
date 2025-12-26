@@ -1,0 +1,162 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Debug Main App",
+      "type": "node",
+      "request": "launch",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "-r",
+        "ts-node/register",
+        "-r",
+        "dotenv/config"
+      ],
+      "args": [
+        "${workspaceFolder}/src/index.ts"
+      ],
+      "cwd": "${workspaceFolder}",
+      "env": {
+        "NODE_ENV": "development",
+        "TS_NODE_TRANSPILE_ONLY": "true"
+      },
+      "envFile": "${workspaceFolder}/.env",
+      "sourceMaps": true,
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "resolveSourceMapLocations": [
+        "${workspaceFolder}/**",
+        "!**/node_modules/**"
+      ]
+    },
+    {
+      "name": "Debug Main App (with RUN_NOW)",
+      "type": "node",
+      "request": "launch",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "-r",
+        "ts-node/register",
+        "-r",
+        "dotenv/config"
+      ],
+      "args": [
+        "${workspaceFolder}/src/index.ts"
+      ],
+      "cwd": "${workspaceFolder}",
+      "env": {
+        "NODE_ENV": "development",
+        "TS_NODE_TRANSPILE_ONLY": "true",
+        "RUN_NOW": "true"
+      },
+      "envFile": "${workspaceFolder}/.env",
+      "sourceMaps": true,
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "resolveSourceMapLocations": [
+        "${workspaceFolder}/**",
+        "!**/node_modules/**"
+      ]
+    },
+    {
+      "name": "Debug Manual Scrape (Bezrealitky)",
+      "type": "node",
+      "request": "launch",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "-r",
+        "ts-node/register",
+        "-r",
+        "dotenv/config"
+      ],
+      "args": [
+        "${workspaceFolder}/scripts/manual-scrape-bezrealitky.ts"
+      ],
+      "cwd": "${workspaceFolder}",
+      "env": {
+        "NODE_ENV": "development",
+        "TS_NODE_TRANSPILE_ONLY": "true"
+      },
+      "envFile": "${workspaceFolder}/.env",
+      "sourceMaps": true,
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "resolveSourceMapLocations": [
+        "${workspaceFolder}/**",
+        "!**/node_modules/**"
+      ]
+    },
+    {
+      "name": "Debug Manual Scrape (Sreality)",
+      "type": "node",
+      "request": "launch",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "-r",
+        "ts-node/register",
+        "-r",
+        "dotenv/config"
+      ],
+      "args": [
+        "${workspaceFolder}/scripts/manual-scrape-sreality.ts"
+      ],
+      "cwd": "${workspaceFolder}",
+      "env": {
+        "NODE_ENV": "development",
+        "TS_NODE_TRANSPILE_ONLY": "true"
+      },
+      "envFile": "${workspaceFolder}/.env",
+      "sourceMaps": true,
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "resolveSourceMapLocations": [
+        "${workspaceFolder}/**",
+        "!**/node_modules/**"
+      ]
+    },
+    {
+      "name": "Debug Manual Scrape (General)",
+      "type": "node",
+      "request": "launch",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "-r",
+        "ts-node/register",
+        "-r",
+        "dotenv/config"
+      ],
+      "args": [
+        "${workspaceFolder}/scripts/manual-scrape.ts"
+      ],
+      "cwd": "${workspaceFolder}",
+      "env": {
+        "NODE_ENV": "development",
+        "TS_NODE_TRANSPILE_ONLY": "true"
+      },
+      "envFile": "${workspaceFolder}/.env",
+      "sourceMaps": true,
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "resolveSourceMapLocations": [
+        "${workspaceFolder}/**",
+        "!**/node_modules/**"
+      ]
+    }
+  ]
+}
+

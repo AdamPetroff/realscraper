@@ -7,20 +7,8 @@ export interface IdnesScraperConfig {
   ownership: string; // e.g., "personal"
   material: string; // e.g., "brick|wood|stone|skeleton|prefab|mixed"
   roomCount: number; // s-rd parameter
-  articleAge?: string; // 1 / 7 / 31
+  articleAge?: "1" | "7" | "31"; // 1 / 7 / 31
 }
-
-export const DEFAULT_IDNES_CONFIG: IdnesScraperConfig = {
-  priceMin: 3000000,
-  priceMax: 6000000,
-  city: "brno",
-  rooms: "2k|21",
-  areaMin: 36,
-  ownership: "personal",
-  material: "brick|wood|stone|skeleton|prefab|mixed",
-  roomCount: 3,
-  articleAge: "1", // Properties from last 1 day
-};
 
 export interface BezrealitkyScraperConfig {
   newOnly?: boolean;
@@ -45,6 +33,7 @@ export const DEFAULT_BEZREALITKY_CONFIG: BezrealitkyScraperConfig = {
   priceFrom: 3_000_000,
   priceTo: 6_000_000,
   currency: "CZK",
+  newOnly: true,
 };
 
 export function buildBezrealitkyUrl(config: BezrealitkyScraperConfig): string {
@@ -68,11 +57,6 @@ export function buildBezrealitkyUrl(config: BezrealitkyScraperConfig): string {
 
   return `${baseUrl}?${params.toString()}`;
 }
-
-// Keep for backward compatibility
-export const DEFAULT_BEZREALITKY_URL = buildBezrealitkyUrl(
-  DEFAULT_BEZREALITKY_CONFIG
-);
 
 export function buildIdnesUrl(config: IdnesScraperConfig): string {
   const baseUrl = "https://reality.idnes.cz/s/prodej/byty";
@@ -104,17 +88,6 @@ export interface SrealityScraperConfig {
   page?: number;
   newOnly?: boolean;
 }
-
-export const DEFAULT_SREALITY_CONFIG: SrealityScraperConfig = {
-  offerType: "prodej",
-  category: "byty",
-  locationSlug: "brno",
-  sizes: ["2+1", "2+kk", "3+1", "3+kk"],
-  ownership: "osobni",
-  age: "dnes",
-  priceMax: 6_000_000,
-  newOnly: false,
-};
 
 export function buildSrealityUrl(config: SrealityScraperConfig): string {
   const sanitizedLocation = config.locationSlug.replace(/^\/+|\/+$/g, "");
@@ -166,6 +139,8 @@ export interface BazosScraperConfig {
   /**
    * Location code (hlokalita parameter).
    * 60200 = Brno-město area code
+   * 69501 = Hodonín area code
+   * 69002 = Břeclav area code
    */
   locationCode: string;
 
@@ -200,15 +175,6 @@ export interface BazosScraperConfig {
    */
   recentOnly?: boolean;
 }
-
-export const DEFAULT_BAZOS_CONFIG: BazosScraperConfig = {
-  locationCode: "60200", // Brno-město
-  radiusKm: 10,
-  priceMax: 6_000_000,
-  offerType: "prodam",
-  propertyType: "byt",
-  recentOnly: true,
-};
 
 export function buildBazosUrl(config: BazosScraperConfig): string {
   const baseUrl = `https://reality.bazos.cz/${config.offerType}/${config.propertyType}/`;

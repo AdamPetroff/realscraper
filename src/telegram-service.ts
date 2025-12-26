@@ -24,6 +24,50 @@ export class TelegramService {
     await this.sendPropertyImages(properties);
   }
 
+  async sendCombinedPropertiesUpdate(
+    scrapeResults: Array<{ label: string; properties: Property[] }>
+  ): Promise<void> {
+    const totalProperties = scrapeResults.reduce(
+      (sum, result) => sum + result.properties.length,
+      0
+    );
+
+    if (totalProperties === 0) {
+      await this.sendMessage(
+        "🏠 <b>Property Update</b>\n\nNo new properties found."
+      );
+      return;
+    }
+
+    const summaryMessage = this.buildCombinedSummaryMessage(scrapeResults);
+    await this.sendMessage(summaryMessage);
+
+    // Collect all properties from all scrapes and send images
+    const allProperties = scrapeResults.flatMap((result) => result.properties);
+    await this.sendPropertyImages(allProperties);
+  }
+
+  private buildCombinedSummaryMessage(
+    scrapeResults: Array<{ label: string; properties: Property[] }>
+  ): string {
+    const totalProperties = scrapeResults.reduce(
+      (sum, result) => sum + result.properties.length,
+      0
+    );
+
+    const title = `🏠 <b>Total Properties Found: ${totalProperties}</b>\n\n`;
+
+    const scraperRows = scrapeResults
+      .map((result) => {
+        const label = this.escapeHtml(result.label);
+        const count = result.properties.length;
+        return `${label}: ${count}`;
+      })
+      .join("\n");
+
+    return title + scraperRows;
+  }
+
   private buildEmptyMessage(contextLabel?: string): string {
     const title = contextLabel
       ? `🏠 <b>${this.escapeHtml(contextLabel)}</b>\n\n`

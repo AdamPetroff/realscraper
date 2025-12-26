@@ -68,6 +68,8 @@ function parseCli(): { url: string; options: ScrapeOptions } {
     process.env.BEZREALITKY_NEW_ONLY === "true"
   ) {
     options.newOnly = true;
+  } else {
+    options.newOnly = DEFAULT_BEZREALITKY_CONFIG.newOnly || false;
   }
 
   return { url: targetUrl, options };
