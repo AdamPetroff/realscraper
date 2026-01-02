@@ -47,11 +47,11 @@ export type ScrapeConfig =
   | BazosScrapeConfig;
 
 // ============================================================================
-// Daily Scrape Configurations (6 PM)
+// Scrape Configurations (runs every 10 minutes)
 // ============================================================================
-// Add, remove, or modify entries here to change what gets scraped daily.
+// Add, remove, or modify entries here to change what gets scraped.
 
-export const DAILY_SCRAPES: ScrapeConfig[] = [
+export const SCRAPES: ScrapeConfig[] = [
   // IDNES: Default 3-6M CZK range
   {
     type: "idnes",
@@ -65,7 +65,7 @@ export const DAILY_SCRAPES: ScrapeConfig[] = [
       ownership: "personal",
       material: "brick|wood|stone|skeleton|prefab|mixed",
       roomCount: 3,
-      articleAge: "1", // Only get properties from last 1 day
+      articleAge: "1",
     },
   },
   {
@@ -80,7 +80,7 @@ export const DAILY_SCRAPES: ScrapeConfig[] = [
       ownership: "personal",
       material: "brick|wood|stone|skeleton|prefab|mixed",
       roomCount: 3,
-      articleAge: "1", // Only get properties from last 1 day
+      articleAge: "1",
     },
   },
   {
@@ -95,7 +95,7 @@ export const DAILY_SCRAPES: ScrapeConfig[] = [
       ownership: "personal",
       material: "brick|wood|stone|skeleton|prefab|mixed",
       roomCount: 3,
-      articleAge: "1", // Only get properties from last 1 day
+      articleAge: "1",
     },
   },
 
@@ -164,7 +164,7 @@ export const DAILY_SCRAPES: ScrapeConfig[] = [
     },
   },
 
-  // Sreality: Up to 6M CZK
+  // Sreality: 6-8M CZK
   {
     type: "sreality",
     label: "Sreality (6-8M CZK)",
@@ -182,7 +182,7 @@ export const DAILY_SCRAPES: ScrapeConfig[] = [
   },
   {
     type: "sreality",
-    label: "Sreality (Breclav, Hodonín, ≤6M CZK)",
+    label: "Sreality (Breclav, Hodonín, 6-8M CZK)",
     config: {
       offerType: "prodej",
       category: "byty",
@@ -195,14 +195,7 @@ export const DAILY_SCRAPES: ScrapeConfig[] = [
       newOnly: false,
     },
   },
-];
 
-// ============================================================================
-// Nightly Scrape Configurations (11:50 PM & 0:10 AM)
-// ============================================================================
-// Bazos listings are scraped at the end of the day to catch all daily posts.
-
-export const NIGHTLY_SCRAPES: ScrapeConfig[] = [
   // Bazos: Up to 7M CZK
   {
     type: "bazos",
@@ -213,7 +206,7 @@ export const NIGHTLY_SCRAPES: ScrapeConfig[] = [
       offerType: "prodam",
       propertyType: "byt",
       priceMax: 7_000_000,
-      recentOnly: true, // Only listings from today
+      recentOnly: true,
     },
   },
   {
@@ -225,19 +218,19 @@ export const NIGHTLY_SCRAPES: ScrapeConfig[] = [
       offerType: "prodam",
       propertyType: "byt",
       priceMax: 7_000_000,
-      recentOnly: true, // Only listings from today
+      recentOnly: true,
     },
   },
   {
     type: "bazos",
-    label: "Bazos (≤7M CZK)",
+    label: "Bazos (≤7M CZK) Hodonín",
     config: {
       locationCode: "69501", // Hodonín
       radiusKm: 10,
       offerType: "prodam",
       propertyType: "byt",
       priceMax: 7_000_000,
-      recentOnly: true, // Only listings from today
+      recentOnly: true,
     },
   },
 ];
@@ -268,26 +261,14 @@ export function buildUrlForScrape(scrape: ScrapeConfig): string {
 }
 
 export function logActiveScrapes(): void {
-  const dailyScrapes = getEnabledScrapes(DAILY_SCRAPES);
-  const nightlyScrapes = getEnabledScrapes(NIGHTLY_SCRAPES);
+  const scrapes = getEnabledScrapes(SCRAPES);
 
-  console.log("\n📋 Active scrape configurations:");
+  console.log("\n📋 Active scrape configurations (runs every 10 minutes):");
   console.log("─".repeat(60));
 
-  if (dailyScrapes.length > 0) {
-    console.log("\n🌅 Daily scrapes (6 PM):");
-    for (const scrape of dailyScrapes) {
-      console.log(`  • ${scrape.label}`);
-      console.log(`    ${buildUrlForScrape(scrape)}`);
-    }
-  }
-
-  if (nightlyScrapes.length > 0) {
-    console.log("\n🌙 Nightly scrapes (11:50 PM & 0:10 AM):");
-    for (const scrape of nightlyScrapes) {
-      console.log(`  • ${scrape.label}`);
-      console.log(`    ${buildUrlForScrape(scrape)}`);
-    }
+  for (const scrape of scrapes) {
+    console.log(`  • ${scrape.label}`);
+    console.log(`    ${buildUrlForScrape(scrape)}`);
   }
 
   console.log("\n" + "─".repeat(60) + "\n");

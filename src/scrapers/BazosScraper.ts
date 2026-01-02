@@ -120,7 +120,7 @@ export class BazosScraper {
       }
 
       // Build full URL
-      const url = relativeUrl.startsWith("http")
+      const propertyUrl = relativeUrl.startsWith("http")
         ? relativeUrl
         : `https://reality.bazos.cz${relativeUrl}`;
 
@@ -178,11 +178,15 @@ export class BazosScraper {
         location,
         area,
         rooms,
-        url,
+        url: propertyUrl,
         description: description.length > 200 
           ? description.substring(0, 200) + "..." 
           : description,
         isNew,
+        // Database identification fields
+        source: "bazos",
+        sourceId: this.extractIdFromUrl(propertyUrl),
+        priceNumeric: this.parseNumericPrice(priceText),
       };
 
       if (images.length > 0) {
@@ -194,6 +198,42 @@ export class BazosScraper {
       console.error("BazosScraper: Error parsing listing item:", error);
       return null;
     }
+  }
+
+  /**
+   * Extract property ID from Bazos URL.
+   * Example: https://reality.bazos.cz/inzerat/12345678/... → "12345678"
+   */
+  private extractIdFromUrl(url: string): string | undefined {
+    if (!url) return undefined;
+
+    // Pattern: /inzerat/{id}/... 
+    const match = url.match(/\/inzerat\/(\d+)\//);
+    if (match) {
+      return match[1];
+    }
+
+    // Fallback: try to extract any long numeric sequence from the URL
+    const numericMatch = url.match(/(\d{6,})/);
+    return numericMatch ? numericMatch[1] : undefined;
+  }
+
+  /**
+   * Parse numeric price from formatted price string.
+   * Example: "3 500 000 Kč" → 3500000
+   */
+  private parseNumericPrice(priceText: string): number | undefined {
+    if (!priceText) return undefined;
+
+    // Handle special cases
+    if (priceText.toLowerCase() === "zdarma") return 0;
+    if (priceText.toLowerCase().includes("vyžádání")) return undefined;
+
+    // Remove all non-digit characters
+    const cleaned = priceText.replace(/[^\d]/g, "");
+    const num = parseInt(cleaned, 10);
+
+    return isNaN(num) ? undefined : num;
   }
 
   private formatPrice(priceText: string): string {
@@ -235,4 +275,3 @@ export class BazosScraper {
     // No resources to clean up
   }
 }
-

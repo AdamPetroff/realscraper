@@ -8,11 +8,15 @@
 		"start": "node dist/index.js",
 		"build": "tsc",
 		"dev": "ts-node-dev --respawn --transpile-only src/index.ts",
+		"test": "vitest run",
+		"test:watch": "vitest",
+		"test:coverage": "vitest run --coverage",
 		"manual-scrape": "ts-node --transpile-only scripts/manual-scrape.ts",
 		"manual-scrape-bezrealitky": "ts-node --transpile-only scripts/manual-scrape-bezrealitky.ts",
 		"manual-scrape-sreality": "ts-node --transpile-only scripts/manual-scrape-sreality.ts"
 	},
 	"dependencies": {
+		"@supabase/supabase-js": "^2.89.0",
 		"cheerio": "^1.0.0-rc.12",
 		"dotenv": "^16.4.5",
 		"node-cron": "^3.0.3",
@@ -24,8 +28,10 @@
 		"@types/node": "^20.0.0",
 		"@types/node-cron": "^3.0.11",
 		"@types/node-telegram-bot-api": "^0.64.7",
+		"@vitest/coverage-v8": "^4.0.16",
 		"ts-node": "^10.9.0",
 		"ts-node-dev": "^2.0.0",
-		"typescript": "^5.0.0"
+		"typescript": "^5.0.0",
+		"vitest": "^4.0.16"
 	}
 }

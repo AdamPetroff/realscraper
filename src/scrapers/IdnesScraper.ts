@@ -59,16 +59,22 @@ export class IdnesScraper {
 
         items.each((_, element) => {
           const $item = $(element);
+          const propertyUrl = this.extractUrl($item, url);
+          const priceText = this.extractText($item, [".c-products__price"]);
 
           const property: Property = {
             title: this.extractText($item, [".c-products__title"]),
-            price: this.extractText($item, [".c-products__price"]),
+            price: priceText,
             location: this.extractText($item, [".c-products__info"]),
             area: this.extractText($item, [".c-products__info .floor-area"]),
             rooms: this.extractText($item, [".c-products__info .rooms"]),
-            url: this.extractUrl($item, url),
+            url: propertyUrl,
             description: this.extractText($item, [".c-products__description"]),
             images: this.extractImages($item, ["img"], $),
+            // Database identification fields
+            source: "idnes",
+            sourceId: this.extractIdFromUrl(propertyUrl),
+            priceNumeric: this.parseNumericPrice(priceText),
           };
 
           if (!property.area) {
@@ -91,6 +97,38 @@ export class IdnesScraper {
       console.error("IdnesScraper: Error scraping properties:", error);
       throw error;
     }
+  }
+
+  /**
+   * Extract property ID from Idnes URL.
+   * Example: https://reality.idnes.cz/detail/prodej/byt/brno/12345678/ → "12345678"
+   */
+  private extractIdFromUrl(url: string): string | undefined {
+    if (!url) return undefined;
+
+    // Pattern: /detail/.../{id}/ or ending with numeric ID
+    const match = url.match(/\/(\d+)\/?(?:\?|$)/);
+    if (match) {
+      return match[1];
+    }
+
+    // Fallback: try to extract any long numeric sequence from the URL
+    const numericMatch = url.match(/(\d{6,})/);
+    return numericMatch ? numericMatch[1] : undefined;
+  }
+
+  /**
+   * Parse numeric price from formatted price string.
+   * Example: "3 500 000 Kč" → 3500000
+   */
+  private parseNumericPrice(priceText: string): number | undefined {
+    if (!priceText) return undefined;
+
+    // Remove all non-digit characters except for decimal separators
+    const cleaned = priceText.replace(/[^\d]/g, "");
+    const num = parseInt(cleaned, 10);
+
+    return isNaN(num) ? undefined : num;
   }
 
   private extractText(

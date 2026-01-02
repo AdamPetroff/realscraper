@@ -293,6 +293,10 @@ export class SrealityScraper {
       rooms,
       url,
       isNew,
+      // Database identification fields
+      source: "sreality",
+      sourceId: String(estate.id),
+      priceNumeric: priceValue || undefined,
     };
 
     if (images.length > 0) {

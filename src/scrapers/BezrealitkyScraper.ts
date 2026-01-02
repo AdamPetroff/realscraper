@@ -190,12 +190,13 @@ export class BezrealitkyScraper {
       typeof advert.charges === "number" ? advert.charges : undefined;
     const currency: string = advert.currency || "CZK";
     const disposition: string = advert.disposition || "";
+    const uri: string = advert.uri || "";
 
     const price = this.formatPrice(priceNumber, chargesNumber, currency);
     const area = this.formatArea(advert.surface);
     const rooms = this.formatRooms(disposition);
     const description = this.formatDescription(advert[tagsKey]);
-    const url = this.buildListingUrl(advert.uri);
+    const url = this.buildListingUrl(uri);
     const images = this.extractImages(advert[publicImagesKey], apolloCache);
     const isNew = this.detectIsNew(advert);
 
@@ -212,6 +213,10 @@ export class BezrealitkyScraper {
       url,
       description,
       isNew,
+      // Database identification fields
+      source: "bezrealitky",
+      sourceId: uri, // Use URI as the unique identifier
+      priceNumeric: priceNumber,
     };
 
     if (images.length > 0) {

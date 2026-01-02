@@ -6,10 +6,9 @@ import {
   BazosScraper,
 } from "./scrapers";
 import { TelegramService } from "./telegram-service";
-import type { Property } from "./types";
+import type { Property, PropertyWithPriceChange, ScrapeResult } from "./types";
 import {
-  DAILY_SCRAPES,
-  NIGHTLY_SCRAPES,
+  SCRAPES,
   getEnabledScrapes,
   getScraperTypes,
   buildUrlForScrape,
@@ -17,6 +16,11 @@ import {
   type ScrapeConfig,
   type ScraperType,
 } from "./scrape-configs";
+import {
+  initializeSupabase,
+  isSupabaseAvailable,
+  processProperties,
+} from "./db";
 
 type ScraperInstance =
   | IdnesScraper
@@ -27,18 +31,24 @@ type ScraperInstance =
 export class PropertyScheduler {
   private scrapers: Map<ScraperType, ScraperInstance> = new Map();
   private telegram: TelegramService;
+  private dbAvailable: boolean = false;
 
   constructor(telegramToken: string, chatId: string) {
     this.telegram = new TelegramService(telegramToken, chatId);
   }
 
   async initialize(): Promise<void> {
+    // Initialize database connection
+    this.dbAvailable = await initializeSupabase();
+    if (this.dbAvailable) {
+      console.log("✅ Database persistence enabled");
+    } else {
+      console.log("⚠️ Running without database persistence (all properties will be notified)");
+    }
+
     // Determine which scrapers we need based on enabled configs
-    const allScrapes = [
-      ...getEnabledScrapes(DAILY_SCRAPES),
-      ...getEnabledScrapes(NIGHTLY_SCRAPES),
-    ];
-    const neededScrapers = getScraperTypes(allScrapes);
+    const enabledScrapes = getEnabledScrapes(SCRAPES);
+    const neededScrapers = getScraperTypes(enabledScrapes);
 
     // Initialize only the scrapers we need
     const initPromises: Promise<void>[] = [];
@@ -85,59 +95,23 @@ export class PropertyScheduler {
   }
 
   startScheduler(): void {
-    // Main daily scrape at 6 PM
+    // Run scrapes every 10 minutes
     cron.schedule(
-      "0 18 * * *",
+      "*/10 * * * *",
       async () => {
-        console.log(
-          "🕕 Starting combined daily property scraping at 6 PM (Prague time)..."
-        );
-        await this.runDailyScrape();
+        console.log("🔄 Starting scheduled property scrape...");
+        await this.runScrape();
       },
       {
         timezone: "Europe/Prague",
       }
     );
 
-    // Nightly scrape at 23:50 (end of day to catch all today's listings)
-    cron.schedule(
-      "50 23 * * *",
-      async () => {
-        console.log(
-          "🌙 Starting nightly property scraping at 23:50 (Prague time)..."
-        );
-        await this.runNightlyScrape();
-      },
-      {
-        timezone: "Europe/Prague",
-      }
-    );
-
-    // Nightly scrape at 0:10 (after midnight to catch late-night/midnight listings)
-    cron.schedule(
-      "10 0 * * *",
-      async () => {
-        console.log(
-          "🌅 Starting nightly property scraping at 0:10 (Prague time)..."
-        );
-        await this.runNightlyScrape();
-      },
-      {
-        timezone: "Europe/Prague",
-      }
-    );
-
-    console.log(
-      "⏰ Scheduler started - jobs scheduled for 6:00 PM, 11:50 PM, and 0:10 AM (Prague time)"
-    );
+    console.log("⏰ Scheduler started - scraping every 10 minutes");
   }
 
-  async runDailyScrape(): Promise<void> {
-    await this.runScrapes(getEnabledScrapes(DAILY_SCRAPES), "daily");
-  }
-
-  async runNightlyScrape(): Promise<void> {
-    await this.runScrapes(getEnabledScrapes(NIGHTLY_SCRAPES), "nightly");
+  async runScrape(): Promise<void> {
+    await this.runScrapes(getEnabledScrapes(SCRAPES), "scheduled");
   }
 
   private async runScrapes(
@@ -146,17 +120,26 @@ export class PropertyScheduler {
   ): Promise<void> {
     try {
       // Collect all scrape results
-      const scrapeResults: Array<{ label: string; properties: Property[] }> =
-        [];
+      const scrapeResults: ScrapeResult[] = [];
       for (const scrape of scrapes) {
-        const properties = await this.executeScrape(scrape);
-        scrapeResults.push({ label: scrape.label, properties });
+        const result = await this.executeScrape(scrape);
+        scrapeResults.push(result);
       }
 
-      // Send combined summary message
-      await this.telegram.sendCombinedPropertiesUpdate(scrapeResults);
+      // Calculate totals
+      const totalNew = scrapeResults.reduce((sum, r) => sum + r.newCount, 0);
+      const totalPriceChanges = scrapeResults.reduce((sum, r) => sum + r.priceChangeCount, 0);
+      const totalSkipped = scrapeResults.reduce((sum, r) => sum + r.skippedCount, 0);
+      
+      // Only send Telegram message if there are new properties or price changes
+      if (totalNew > 0 || totalPriceChanges > 0) {
+        await this.telegram.sendCombinedPropertiesUpdate(scrapeResults);
+      }
 
-      console.log(`✅ ${jobName} scrape completed successfully`);
+      // Log summary
+      console.log(
+        `✅ ${jobName} scrape completed: ${totalNew} new, ${totalPriceChanges} price changes, ${totalSkipped} skipped`
+      );
     } catch (error) {
       console.error(`❌ Error during ${jobName} scrape:`, error);
 
@@ -170,7 +153,7 @@ export class PropertyScheduler {
     }
   }
 
-  private async executeScrape(scrape: ScrapeConfig): Promise<Property[]> {
+  private async executeScrape(scrape: ScrapeConfig): Promise<ScrapeResult> {
     const { type, label, config } = scrape;
     const url = buildUrlForScrape(scrape);
 
@@ -214,24 +197,50 @@ export class PropertyScheduler {
 
         default:
           console.warn(`⚠️ Unknown scraper type: ${type}`);
-          return [];
+          return {
+            label,
+            properties: [],
+            newCount: 0,
+            priceChangeCount: 0,
+            skippedCount: 0,
+          };
       }
 
       console.log(
         `📊 [${label}] ${type} returned ${properties.length} properties`
       );
-      return properties;
+
+      // Process properties through database (if available)
+      const { results, newCount, priceChangeCount, skippedCount } = 
+        await processProperties(properties);
+
+      console.log(
+        `📊 [${label}] After dedup: ${newCount} new, ${priceChangeCount} price changes, ${skippedCount} skipped`
+      );
+
+      return {
+        label,
+        properties: results,
+        newCount,
+        priceChangeCount,
+        skippedCount,
+      };
     } catch (error) {
       console.error(`❌ [${label}] Error during ${type} scrape:`, error);
-      return [];
+      return {
+        label,
+        properties: [],
+        newCount: 0,
+        priceChangeCount: 0,
+        skippedCount: 0,
+      };
     }
   }
 
   // For testing - run scrape immediately
   async runManualScrape(): Promise<void> {
     console.log("🔍 Running manual scrape...");
-    await this.runDailyScrape();
-    await this.runNightlyScrape();
+    await this.runScrape();
   }
 
   async close(): Promise<void> {

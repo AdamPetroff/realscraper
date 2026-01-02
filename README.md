@@ -7,10 +7,14 @@ A TypeScript-based web scraper for Czech real estate listings from multiple sour
 - 🏠 Scrapes real estate listings from:
   - **reality.idnes.cz**
   - **bezrealitky.cz**
+  - **sreality.cz**
+  - **bazos.cz**
 - 📱 Sends daily updates via Telegram bot
 - ⏰ Automatically runs at 6 PM every day
-- 🔍 Configurable search parameters for both sources
+- 🔍 Configurable search parameters for all sources
 - 🇨🇿 Focuses on properties added in the last day
+- 💾 **Database persistence** - tracks seen properties to avoid duplicate notifications
+- 💰 **Price change detection** - notifies when property prices change
 
 ## Setup
 
@@ -38,6 +42,28 @@ A TypeScript-based web scraper for Czech real estate listings from multiple sour
    TELEGRAM_BOT_TOKEN=your_bot_token_here
    TELEGRAM_CHAT_ID=your_chat_id_here
    ```
+
+5. **(Optional) Setup Database Persistence:**
+   
+   Database persistence enables property deduplication and price change tracking. Without it, you'll receive notifications for all properties on every scrape.
+
+   a. **Create a Supabase project:**
+      - Go to [supabase.com](https://supabase.com) and create a new project
+      - Note your project URL and service role key
+
+   b. **Run database migrations:**
+      ```bash
+      # Using Supabase CLI
+      supabase db push
+      
+      # Or manually run the SQL files in supabase/migrations/
+      ```
+
+   c. **Add Supabase credentials to .env:**
+      ```
+      SUPABASE_URL=https://your-project.supabase.co
+      SUPABASE_SERVICE_ROLE_KEY=your_service_role_key_here
+      ```
 
 ## Usage
 
@@ -76,6 +102,10 @@ Runs scrapers without Telegram integration for testing.
 Required:
 - `TELEGRAM_BOT_TOKEN` - Your bot token from @BotFather
 - `TELEGRAM_CHAT_ID` - Your Telegram chat ID
+
+Optional - Database (enables deduplication):
+- `SUPABASE_URL` - Your Supabase project URL
+- `SUPABASE_SERVICE_ROLE_KEY` - Your Supabase service role key
 
 Optional - Idnes Scraper Configuration:
 - `IDNES_PRICE_MIN` - Minimum price in CZK (default: 3000000)
@@ -120,6 +150,39 @@ Other:
 - Sale (PRODEJ)
 - **Only new properties** (when running via scheduler)
 
+## Database Schema
+
+When database persistence is enabled, the following tables are used:
+
+### `properties` table
+Stores all seen properties with:
+- `source` - Which scraper found the property (idnes, bezrealitky, sreality, bazos)
+- `source_id` - The property's unique ID from the source site
+- `price_numeric` - Numeric price for comparison
+- `first_seen_at` / `last_seen_at` - Timestamps for tracking
+
+### `price_history` table
+Records price changes over time for historical tracking.
+
+## How It Works
+
+1. **Daily Schedule**: Bot runs automatically at 6 PM Prague time
+2. **Property Search**: 
+   - Scrapes configured real estate sites
+   - Extracts property details including unique IDs
+3. **Deduplication** (with database):
+   - Checks each property against the database
+   - Skips properties already seen with unchanged prices
+   - Detects and reports price changes
+4. **Message Format**: Sends formatted Telegram message with:
+   - Property count (new and price changes separately)
+   - Title, price, location
+   - Price change indicator (📉 or 📈) for changed prices
+   - Area, room count, description (when available)
+   - Direct links to listings
+   - Property images (when available)
+   - Limits to 10 properties per message
+
 ## Available Scripts
 
 - `npm start` - Start the Telegram bot with scheduler
@@ -127,26 +190,14 @@ Other:
 - `npm run manual-scrape` - Run one-time scrape without bot
 - `npm run build` - Compile TypeScript
 
-## How It Works
-
-1. **Daily Schedule**: Bot runs automatically at 6 PM Prague time
-2. **Property Search**: 
-   - Scrapes reality.idnes.cz for properties added in the last day (two price ranges)
-   - Scrapes bezrealitky.cz for new properties only
-3. **Message Format**: Sends formatted Telegram message with:
-   - Property count
-   - Title, price, location
-   - Area, room count, description (when available)
-   - Direct links to listings
-   - Property images (when available)
-   - Limits to 10 properties per message
-
 ## Troubleshooting
 
 - **Bot doesn't respond**: Check your `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID`
 - **No properties found**: The search criteria might be too restrictive, or no new properties were listed
 - **Scraper fails**: Website might have anti-bot protection or structure changed
 - **Timezone issues**: Bot uses Europe/Prague timezone for scheduling
+- **Database errors**: Check your `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY`
+- **All properties shown**: If database is not configured, all scraped properties will be notified
 
 ## Development
 

@@ -1,5 +1,5 @@
 import TelegramBot from "node-telegram-bot-api";
-import type { Property } from "./types";
+import type { Property, PropertyWithPriceChange, ScrapeResult } from "./types";
 
 export class TelegramService {
   private bot: TelegramBot;
@@ -25,20 +25,8 @@ export class TelegramService {
   }
 
   async sendCombinedPropertiesUpdate(
-    scrapeResults: Array<{ label: string; properties: Property[] }>
+    scrapeResults: ScrapeResult[]
   ): Promise<void> {
-    const totalProperties = scrapeResults.reduce(
-      (sum, result) => sum + result.properties.length,
-      0
-    );
-
-    if (totalProperties === 0) {
-      await this.sendMessage(
-        "🏠 <b>Property Update</b>\n\nNo new properties found."
-      );
-      return;
-    }
-
     const summaryMessage = this.buildCombinedSummaryMessage(scrapeResults);
     await this.sendMessage(summaryMessage);
 
@@ -48,20 +36,33 @@ export class TelegramService {
   }
 
   private buildCombinedSummaryMessage(
-    scrapeResults: Array<{ label: string; properties: Property[] }>
+    scrapeResults: ScrapeResult[]
   ): string {
-    const totalProperties = scrapeResults.reduce(
-      (sum, result) => sum + result.properties.length,
-      0
-    );
+    const totalNew = scrapeResults.reduce((sum, r) => sum + r.newCount, 0);
+    const totalPriceChanges = scrapeResults.reduce((sum, r) => sum + r.priceChangeCount, 0);
+    const totalSkipped = scrapeResults.reduce((sum, r) => sum + r.skippedCount, 0);
 
-    const title = `🏠 <b>Total Properties Found: ${totalProperties}</b>\n\n`;
+    let title = `🏠 <b>Property Update</b>\n\n`;
+    
+    if (totalNew > 0) {
+      title += `🆕 <b>${totalNew}</b> new listing${totalNew !== 1 ? 's' : ''}\n`;
+    }
+    if (totalPriceChanges > 0) {
+      title += `💰 <b>${totalPriceChanges}</b> price change${totalPriceChanges !== 1 ? 's' : ''}\n`;
+    }
+    if (totalSkipped > 0) {
+      title += `⏭️ ${totalSkipped} unchanged (skipped)\n`;
+    }
+    title += "\n";
 
     const scraperRows = scrapeResults
       .map((result) => {
         const label = this.escapeHtml(result.label);
-        const count = result.properties.length;
-        return `${label}: ${count}`;
+        const parts: string[] = [];
+        if (result.newCount > 0) parts.push(`${result.newCount} new`);
+        if (result.priceChangeCount > 0) parts.push(`${result.priceChangeCount} price changes`);
+        const info = parts.length > 0 ? parts.join(", ") : "0 results";
+        return `${label}: ${info}`;
       })
       .join("\n");
 
@@ -145,7 +146,7 @@ export class TelegramService {
     }
   }
 
-  private async sendPropertyImages(properties: Property[]): Promise<void> {
+  private async sendPropertyImages(properties: (Property | PropertyWithPriceChange)[]): Promise<void> {
     const mediaItems = this.buildMediaItems(properties);
     if (mediaItems.length === 0) {
       console.log("❌ No media items to send");
@@ -166,7 +167,7 @@ export class TelegramService {
   }
 
   private buildMediaItems(
-    properties: Property[]
+    properties: (Property | PropertyWithPriceChange)[]
   ): TelegramBot.InputMediaPhoto[] {
     return properties
       .slice(0, 10)
@@ -189,7 +190,7 @@ export class TelegramService {
       .filter((item) => item !== null);
   }
 
-  private formatPropertyCaption(property: Property, index: number): string {
+  private formatPropertyCaption(property: Property | PropertyWithPriceChange, index: number): string {
     const title = this.escapeHtml(property.title || "No title");
     const price = this.escapeHtml(property.price || "N/A");
     const location = this.escapeHtml(
@@ -197,12 +198,27 @@ export class TelegramService {
     );
     const url = this.escapeHtml(property.url);
 
-    return [
+    const lines = [
       `<b>${index + 1}. ${title}</b>`,
-      `💰 ${price}`,
-      `📍 ${location}`,
-      `🔗 <a href="${url}">View Details</a>`,
-    ].join("\n");
+    ];
+
+    // Check if this is a price change
+    const priceChangeProperty = property as PropertyWithPriceChange;
+    if (priceChangeProperty.isPriceChange && priceChangeProperty.previousPrice) {
+      const oldPrice = this.escapeHtml(priceChangeProperty.previousPrice);
+      const changePercent = priceChangeProperty.priceChangePercent || 0;
+      const changeIcon = changePercent < 0 ? "📉" : "📈";
+      const changeSign = changePercent > 0 ? "+" : "";
+      
+      lines.push(`${changeIcon} <s>${oldPrice}</s> → <b>${price}</b> (${changeSign}${changePercent}%)`);
+    } else {
+      lines.push(`💰 ${price}`);
+    }
+
+    lines.push(`📍 ${location}`);
+    lines.push(`🔗 <a href="${url}">View Details</a>`);
+
+    return lines.join("\n");
   }
 
   async testConnection(): Promise<boolean> {
