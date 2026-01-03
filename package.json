@@ -13,7 +13,10 @@
 		"test:coverage": "vitest run --coverage",
 		"manual-scrape": "ts-node --transpile-only scripts/manual-scrape.ts",
 		"manual-scrape-bezrealitky": "ts-node --transpile-only scripts/manual-scrape-bezrealitky.ts",
-		"manual-scrape-sreality": "ts-node --transpile-only scripts/manual-scrape-sreality.ts"
+		"manual-scrape-sreality": "ts-node --transpile-only scripts/manual-scrape-sreality.ts",
+		"deploy": "./scripts/deploy.sh",
+		"env": "./scripts/env.sh",
+		"env:show": "./scripts/env.sh show"
 	},
 	"dependencies": {
 		"@supabase/supabase-js": "^2.89.0",
