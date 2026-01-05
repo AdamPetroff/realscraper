@@ -101,18 +101,34 @@ export class IdnesScraper {
 
   /**
    * Extract property ID from Idnes URL.
-   * Example: https://reality.idnes.cz/detail/prodej/byt/brno/12345678/ → "12345678"
+   * Example: https://reality.idnes.cz/detail/prodej/byt/brno/695aab879a10a9efb00b440c/ → "695aab879a10a9efb00b440c"
+   * Legacy:  https://reality.idnes.cz/detail/prodej/byt/brno/12345678/ → "12345678"
    */
   private extractIdFromUrl(url: string): string | undefined {
     if (!url) return undefined;
 
-    // Pattern: /detail/.../{id}/ or ending with numeric ID
-    const match = url.match(/\/(\d+)\/?(?:\?|$)/);
-    if (match) {
-      return match[1];
+    // Pattern 1: /detail/{type}/{property_type}/{location}/{id}/
+    // The ID can be alphanumeric (24-char hex like MongoDB ObjectId) or numeric
+    const detailMatch = url.match(
+      /\/detail\/[^/]+\/[^/]+\/[^/]+\/([a-f0-9]+)\/?(?:\?|$)/i
+    );
+    if (detailMatch) {
+      return detailMatch[1];
     }
 
-    // Fallback: try to extract any long numeric sequence from the URL
+    // Pattern 2: Legacy numeric ID at end of URL
+    const numericEndMatch = url.match(/\/(\d+)\/?(?:\?|$)/);
+    if (numericEndMatch) {
+      return numericEndMatch[1];
+    }
+
+    // Fallback: try to extract any long alphanumeric sequence from the URL
+    const alphanumericMatch = url.match(/([a-f0-9]{24})/i);
+    if (alphanumericMatch) {
+      return alphanumericMatch[1];
+    }
+
+    // Last resort: try to extract any long numeric sequence
     const numericMatch = url.match(/(\d{6,})/);
     return numericMatch ? numericMatch[1] : undefined;
   }

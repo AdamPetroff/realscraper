@@ -10,17 +10,31 @@ import { describe, it, expect } from "vitest";
 
 /**
  * Extract property ID from Idnes URL.
+ * Supports both new alphanumeric IDs (24-char hex) and legacy numeric IDs.
  */
 function extractIdFromIdnesUrl(url: string): string | undefined {
   if (!url) return undefined;
 
-  // Pattern: /detail/.../{id}/ or ending with numeric ID
-  const match = url.match(/\/(\d+)\/?(?:\?|$)/);
-  if (match) {
-    return match[1];
+  // Pattern 1: /detail/{type}/{property_type}/{location}/{id}/
+  // The ID can be alphanumeric (24-char hex like MongoDB ObjectId) or numeric
+  const detailMatch = url.match(/\/detail\/[^/]+\/[^/]+\/[^/]+\/([a-f0-9]+)\/?(?:\?|$)/i);
+  if (detailMatch) {
+    return detailMatch[1];
   }
 
-  // Fallback: try to extract any long numeric sequence from the URL
+  // Pattern 2: Legacy numeric ID at end of URL
+  const numericEndMatch = url.match(/\/(\d+)\/?(?:\?|$)/);
+  if (numericEndMatch) {
+    return numericEndMatch[1];
+  }
+
+  // Fallback: try to extract any long alphanumeric sequence from the URL
+  const alphanumericMatch = url.match(/([a-f0-9]{24})/i);
+  if (alphanumericMatch) {
+    return alphanumericMatch[1];
+  }
+
+  // Last resort: try to extract any long numeric sequence
   const numericMatch = url.match(/(\d{6,})/);
   return numericMatch ? numericMatch[1] : undefined;
 }
@@ -60,19 +74,37 @@ function parseNumericPrice(priceText: string): number | undefined {
 }
 
 describe("ID Extraction - Idnes Scraper", () => {
-  it("should extract ID from standard Idnes URL", () => {
+  it("should extract alphanumeric ID from new Idnes URL format", () => {
+    const url =
+      "https://reality.idnes.cz/detail/prodej/byt/brno-cermakova/695aab879a10a9efb00b440c/";
+    expect(extractIdFromIdnesUrl(url)).toBe("695aab879a10a9efb00b440c");
+  });
+
+  it("should extract alphanumeric ID without trailing slash", () => {
+    const url =
+      "https://reality.idnes.cz/detail/prodej/byt/brno-cermakova/695aab879a10a9efb00b440c";
+    expect(extractIdFromIdnesUrl(url)).toBe("695aab879a10a9efb00b440c");
+  });
+
+  it("should extract alphanumeric ID with query parameters", () => {
+    const url =
+      "https://reality.idnes.cz/detail/prodej/byt/brno/695aab879a10a9efb00b440c/?utm_source=test";
+    expect(extractIdFromIdnesUrl(url)).toBe("695aab879a10a9efb00b440c");
+  });
+
+  it("should extract ID from legacy numeric Idnes URL", () => {
     const url =
       "https://reality.idnes.cz/detail/prodej/byt/brno-kralovo-pole/12345678/";
     expect(extractIdFromIdnesUrl(url)).toBe("12345678");
   });
 
-  it("should extract ID from URL without trailing slash", () => {
+  it("should extract legacy numeric ID without trailing slash", () => {
     const url =
       "https://reality.idnes.cz/detail/prodej/byt/brno-kralovo-pole/12345678";
     expect(extractIdFromIdnesUrl(url)).toBe("12345678");
   });
 
-  it("should extract ID from URL with query parameters", () => {
+  it("should extract legacy numeric ID with query parameters", () => {
     const url =
       "https://reality.idnes.cz/detail/prodej/byt/brno/12345678/?utm_source=test";
     expect(extractIdFromIdnesUrl(url)).toBe("12345678");
