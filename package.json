@@ -14,6 +14,7 @@
 		"manual-scrape": "ts-node --transpile-only scripts/manual-scrape.ts",
 		"manual-scrape-bezrealitky": "ts-node --transpile-only scripts/manual-scrape-bezrealitky.ts",
 		"manual-scrape-sreality": "ts-node --transpile-only scripts/manual-scrape-sreality.ts",
+		"log-urls": "ts-node --transpile-only scripts/log-scrape-urls.ts",
 		"deploy": "./scripts/deploy.sh",
 		"env": "./scripts/env.sh",
 		"env:show": "./scripts/env.sh show"

@@ -98,13 +98,43 @@ export const SCRAPES: ScrapeConfig[] = [
       articleAge: "1",
     },
   },
+  {
+    type: "idnes",
+    label: "IDNES (3-6M CZK) Olomouc",
+    config: {
+      priceMin: 3000000,
+      priceMax: 6000000,
+      city: "olomouc",
+      rooms: "2k|21",
+      areaMin: 36,
+      ownership: "personal",
+      material: "brick|wood|stone|skeleton|prefab|mixed",
+      roomCount: 3,
+      articleAge: "1",
+    },
+  },
 
   // IDNES: Higher price range 6-8M CZK
   {
     type: "idnes",
-    label: "IDNES (6-8M CZK)",
+    label: "IDNES (6-8M CZK) Brno",
     config: {
       city: "brno",
+      ownership: "personal",
+      material: "brick|wood|stone|skeleton|prefab|mixed",
+      roomCount: 3,
+      articleAge: "1",
+      priceMin: 6_000_000,
+      priceMax: 8_000_000,
+      rooms: "2k|21|3k|31",
+      areaMin: 50,
+    },
+  },
+  {
+    type: "idnes",
+    label: "IDNES (6-8M CZK) Olomouc",
+    config: {
+      city: "olomouc",
       ownership: "personal",
       material: "brick|wood|stone|skeleton|prefab|mixed",
       roomCount: 3,
@@ -119,7 +149,7 @@ export const SCRAPES: ScrapeConfig[] = [
   // Bezrealitky: Up to 6M CZK
   {
     type: "bezrealitky",
-    label: "Bezrealitky (≤6M CZK)",
+    label: "Bezrealitky (≤6M CZK) Brno",
     config: {
       dispositions: ["DISP_2_1", "DISP_2_KK", "DISP_3_1", "DISP_3_KK"],
       estateType: "BYT",
@@ -133,11 +163,27 @@ export const SCRAPES: ScrapeConfig[] = [
       newOnly: true,
     },
   },
+  {
+    type: "bezrealitky",
+    label: "Bezrealitky (≤6M CZK) Olomouc",
+    config: {
+      dispositions: ["DISP_2_1", "DISP_2_KK", "DISP_3_1", "DISP_3_KK"],
+      estateType: "BYT",
+      offerType: "PRODEJ",
+      location: "exact",
+      osmValue: "Olomouc, okres Olomouc, Olomoucký kraj, Střední Morava, Česko",
+      regionOsmIds: "R437057",
+      priceFrom: 3_000_000,
+      priceTo: 6_000_000,
+      currency: "CZK",
+      newOnly: true,
+    },
+  },
 
   // Sreality: Up to 6M CZK
   {
     type: "sreality",
-    label: "Sreality (≤6M CZK)",
+    label: "Sreality (≤6M CZK) Brno",
     config: {
       offerType: "prodej",
       category: "byty",
@@ -151,7 +197,7 @@ export const SCRAPES: ScrapeConfig[] = [
   },
   {
     type: "sreality",
-    label: "Sreality (Breclav, Hodonín, ≤6M CZK)",
+    label: "Sreality (≤6M CZK) Břeclav, Hodonín",
     config: {
       offerType: "prodej",
       category: "byty",
@@ -163,11 +209,25 @@ export const SCRAPES: ScrapeConfig[] = [
       newOnly: false,
     },
   },
+  {
+    type: "sreality",
+    label: "Sreality (≤6M CZK) Olomouc",
+    config: {
+      offerType: "prodej",
+      category: "byty",
+      locationSlug: "olomouc",
+      sizes: ["2+1", "2+kk", "3+1", "3+kk"],
+      ownership: "osobni",
+      age: "dnes",
+      priceMax: 6_000_000,
+      newOnly: false,
+    },
+  },
 
   // Sreality: 6-8M CZK
   {
     type: "sreality",
-    label: "Sreality (6-8M CZK)",
+    label: "Sreality (6-8M CZK) Brno",
     config: {
       offerType: "prodej",
       category: "byty",
@@ -182,11 +242,26 @@ export const SCRAPES: ScrapeConfig[] = [
   },
   {
     type: "sreality",
-    label: "Sreality (Breclav, Hodonín, 6-8M CZK)",
+    label: "Sreality (6-8M CZK) Břeclav, Hodonín",
     config: {
       offerType: "prodej",
       category: "byty",
       locationSlug: "breclav,hodonin",
+      sizes: ["2+1", "2+kk", "3+1", "3+kk"],
+      ownership: "osobni",
+      age: "dnes",
+      priceMin: 6_000_000,
+      priceMax: 8_000_000,
+      newOnly: false,
+    },
+  },
+  {
+    type: "sreality",
+    label: "Sreality (6-8M CZK) Olomouc",
+    config: {
+      offerType: "prodej",
+      category: "byty",
+      locationSlug: "olomouc",
       sizes: ["2+1", "2+kk", "3+1", "3+kk"],
       ownership: "osobni",
       age: "dnes",
@@ -226,6 +301,18 @@ export const SCRAPES: ScrapeConfig[] = [
     label: "Bazos (≤7M CZK) Hodonín",
     config: {
       locationCode: "69501", // Hodonín
+      radiusKm: 10,
+      offerType: "prodam",
+      propertyType: "byt",
+      priceMax: 7_000_000,
+      recentOnly: true,
+    },
+  },
+  {
+    type: "bazos",
+    label: "Bazos (≤7M CZK) Olomouc",
+    config: {
+      locationCode: "77900", // Olomouc
       radiusKm: 10,
       offerType: "prodam",
       propertyType: "byt",
