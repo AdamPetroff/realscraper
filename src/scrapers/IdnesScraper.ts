@@ -61,12 +61,17 @@ export class IdnesScraper {
           const $item = $(element);
           const propertyUrl = this.extractUrl($item, url);
           const priceText = this.extractText($item, [".c-products__price"]);
+          const priceNumeric = this.parseNumericPrice(priceText);
+          const areaText = this.extractText($item, [".c-products__info .floor-area"]);
+          const areaValue =
+            this.parseAreaValue(areaText) ||
+            this.parseAreaValue(this.extractText($item, [".c-products__title"]));
 
           const property: Property = {
             title: this.extractText($item, [".c-products__title"]),
             price: priceText,
             location: this.extractText($item, [".c-products__info"]),
-            area: this.extractText($item, [".c-products__info .floor-area"]),
+            area: this.formatAreaValue(areaValue),
             rooms: this.extractText($item, [".c-products__info .rooms"]),
             url: propertyUrl,
             description: this.extractText($item, [".c-products__description"]),
@@ -74,13 +79,9 @@ export class IdnesScraper {
             // Database identification fields
             source: "idnes",
             sourceId: this.extractIdFromUrl(propertyUrl),
-            priceNumeric: this.parseNumericPrice(priceText),
+            priceNumeric,
+            pricePerSqm: this.resolvePricePerSqm(priceNumeric, areaValue),
           };
-
-          if (!property.area) {
-            // if area not found use the last part of location ("{street}, {area}")
-            property.area = property.location.split(",").pop()?.trim();
-          }
 
           if (property.title && property.price) {
             properties.push(property);
@@ -145,6 +146,39 @@ export class IdnesScraper {
     const num = parseInt(cleaned, 10);
 
     return isNaN(num) ? undefined : num;
+  }
+
+  private parseAreaValue(areaText?: string): number | undefined {
+    if (!areaText) return undefined;
+    const match = areaText.match(/(\d+(?:[.,]\d+)?)\s*m[²2]/i);
+    if (!match) return undefined;
+    const value = Number.parseFloat(match[1].replace(",", "."));
+    if (!Number.isFinite(value) || value <= 0) return undefined;
+    return value;
+  }
+
+  private formatAreaValue(area?: number): string | undefined {
+    if (typeof area !== "number" || area <= 0) return undefined;
+    return Number.isInteger(area)
+      ? area.toString()
+      : area.toFixed(1).replace(/\.0$/, "");
+  }
+
+  private resolvePricePerSqm(
+    price?: number,
+    area?: number
+  ): number | undefined {
+    if (
+      typeof price !== "number" ||
+      !Number.isFinite(price) ||
+      price <= 0 ||
+      typeof area !== "number" ||
+      !Number.isFinite(area) ||
+      area <= 0
+    ) {
+      return undefined;
+    }
+    return Math.round(price / area);
   }
 
   private extractText(

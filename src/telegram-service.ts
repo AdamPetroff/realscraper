@@ -4,6 +4,7 @@ import type { Property, PropertyWithPriceChange, ScrapeResult } from "./types";
 export class TelegramService {
   private bot: TelegramBot;
   private chatId: string;
+  private readonly numberFormatter = new Intl.NumberFormat("cs-CZ");
 
   constructor(token: string, chatId: string) {
     this.bot = new TelegramBot(token, { polling: false });
@@ -165,9 +166,9 @@ export class TelegramService {
   ): string {
     const title = this.escapeHtml(property.title || "No title");
     const price = this.escapeHtml(property.price || "N/A");
-    const location = this.escapeHtml(
-      property.area || property.location || "N/A"
-    );
+    const location = this.escapeHtml(property.location || "N/A");
+    const formattedArea = this.formatAreaWithUnit(property.area);
+    const pricePerSqm = this.formatPricePerSqm(property.pricePerSqm);
     const url = this.escapeHtml(property.url);
 
     const lines = [`<b>${index + 1}. ${title}</b>`];
@@ -194,10 +195,47 @@ export class TelegramService {
       lines.push(`💰 ${price}`);
     }
 
+    if (pricePerSqm) {
+      lines.push(`📊 ${this.escapeHtml(pricePerSqm)}`);
+    }
+
+    if (formattedArea) {
+      lines.push(`📐 ${this.escapeHtml(formattedArea)}`);
+    }
+
     lines.push(`📍 ${location}`);
     lines.push(`🔗 <a href="${url}">View Details</a>`);
 
     return lines.join("\n");
+  }
+
+  private formatPricePerSqm(pricePerSqm?: number): string | undefined {
+    if (
+      typeof pricePerSqm !== "number" ||
+      !Number.isFinite(pricePerSqm) ||
+      pricePerSqm <= 0
+    ) {
+      return undefined;
+    }
+
+    return `${this.numberFormatter.format(Math.round(pricePerSqm))} Kč/m²`;
+  }
+
+  private formatAreaWithUnit(area?: string): string | undefined {
+    if (!area) return undefined;
+
+    const normalized = area.trim().replace(",", ".");
+    const numericMatch = normalized.match(/^(\d+(?:\.\d+)?)(?:\s*m(?:2|²))?$/i);
+    if (!numericMatch) return normalized;
+
+    const value = Number.parseFloat(numericMatch[1]);
+    if (!Number.isFinite(value) || value <= 0) return normalized;
+
+    const formattedNumber = Number.isInteger(value)
+      ? value.toString()
+      : value.toFixed(1).replace(/\.0$/, "");
+
+    return `${formattedNumber} m²`;
   }
 
   async testConnection(): Promise<boolean> {

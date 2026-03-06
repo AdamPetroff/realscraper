@@ -12,10 +12,31 @@ export interface DbProperty {
   url: string;
   price_formatted: string | null;
   price_numeric: number | null;
+  price_per_sqm: number | null;
   first_seen_at: string;
   last_seen_at: string;
   created_at: string;
   updated_at: string;
+}
+
+function normalizeAreaForDb(area?: string): string | null {
+  if (!area) {
+    return null;
+  }
+
+  const match = area.match(/(\d+(?:[.,]\d+)?)/);
+  if (!match) {
+    return null;
+  }
+
+  const value = Number.parseFloat(match[1].replace(",", "."));
+  if (!Number.isFinite(value) || value <= 0) {
+    return null;
+  }
+
+  return Number.isInteger(value)
+    ? value.toString()
+    : value.toFixed(2).replace(/\.?0+$/, "");
 }
 
 /**
@@ -74,11 +95,12 @@ export async function upsertProperty(property: Property): Promise<string | null>
         source_id: property.sourceId,
         title: property.title,
         location: property.location,
-        area: property.area || null,
+        area: normalizeAreaForDb(property.area),
         rooms: property.rooms || null,
         url: property.url,
         price_formatted: property.price,
         price_numeric: property.priceNumeric || null,
+        price_per_sqm: property.pricePerSqm || null,
         last_seen_at: now,
         updated_at: now,
       },

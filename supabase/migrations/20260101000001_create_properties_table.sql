@@ -10,6 +10,7 @@ CREATE TABLE properties (
   url TEXT NOT NULL,
   price_formatted TEXT,                  -- Display price (e.g., "3 500 000 Kč")
   price_numeric INTEGER,                 -- Numeric price for comparison
+  price_per_sqm INTEGER,                 -- Price per square meter in CZK
   first_seen_at TIMESTAMPTZ DEFAULT NOW(),
   last_seen_at TIMESTAMPTZ DEFAULT NOW(),
   created_at TIMESTAMPTZ DEFAULT NOW(),

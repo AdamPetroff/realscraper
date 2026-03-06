@@ -127,6 +127,7 @@ export class BazosScraper {
       // Find the price - it's in div.inzeratycena
       const priceText = $item.find("div.inzeratycena").text().trim();
       const price = this.formatPrice(priceText);
+      const priceNumeric = this.parseNumericPrice(priceText);
 
       // The date is shown in span.velikost10 element
       // It appears as text like "- [11.12. 2025]" or "- TOP - [11.12. 2025]"
@@ -167,7 +168,8 @@ export class BazosScraper {
       }
 
       // Try to extract area from title or description
-      const area = this.extractArea(title) || this.extractArea(description);
+      const areaValue = this.extractAreaValue(title) || this.extractAreaValue(description);
+      const area = this.formatArea(areaValue);
 
       // Try to extract rooms from title
       const rooms = this.extractRooms(title);
@@ -186,7 +188,8 @@ export class BazosScraper {
         // Database identification fields
         source: "bazos",
         sourceId: this.extractIdFromUrl(propertyUrl),
-        priceNumeric: this.parseNumericPrice(priceText),
+        priceNumeric,
+        pricePerSqm: this.resolvePricePerSqm(priceNumeric, areaValue),
       };
 
       if (images.length > 0) {
@@ -259,10 +262,38 @@ export class BazosScraper {
     return cleaned;
   }
 
-  private extractArea(text: string): string | undefined {
+  private extractAreaValue(text: string): number | undefined {
     // Look for patterns like "60m2", "60 m²", "60m²", "60 m2"
     const match = text.match(/(\d+(?:[.,]\d+)?)\s*m[²2]/i);
-    return match ? `${match[1]} m²` : undefined;
+    if (!match) return undefined;
+    const area = Number.parseFloat(match[1].replace(",", "."));
+    if (!Number.isFinite(area) || area <= 0) return undefined;
+    return area;
+  }
+
+  private formatArea(area?: number): string | undefined {
+    if (typeof area !== "number" || area <= 0) return undefined;
+    return Number.isInteger(area)
+      ? area.toString()
+      : area.toFixed(1).replace(/\.0$/, "");
+  }
+
+  private resolvePricePerSqm(
+    priceNumeric?: number,
+    area?: number
+  ): number | undefined {
+    if (
+      typeof priceNumeric !== "number" ||
+      !Number.isFinite(priceNumeric) ||
+      priceNumeric <= 0 ||
+      typeof area !== "number" ||
+      !Number.isFinite(area) ||
+      area <= 0
+    ) {
+      return undefined;
+    }
+
+    return Math.round(priceNumeric / area);
   }
 
   private extractRooms(text: string): string {

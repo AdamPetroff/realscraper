@@ -193,7 +193,9 @@ export class BezrealitkyScraper {
     const uri: string = advert.uri || "";
 
     const price = this.formatPrice(priceNumber, chargesNumber, currency);
-    const area = this.formatArea(advert.surface);
+    const areaValue = this.resolveAreaValue(advert.surface);
+    const area = this.formatArea(areaValue);
+    const pricePerSqm = this.resolvePricePerSqm(advert, priceNumber, areaValue);
     const rooms = this.formatRooms(disposition);
     const description = this.formatDescription(advert[tagsKey]);
     const url = this.buildListingUrl(uri);
@@ -217,6 +219,7 @@ export class BezrealitkyScraper {
       source: "bezrealitky",
       sourceId: uri, // Use URI as the unique identifier
       priceNumeric: priceNumber,
+      pricePerSqm,
     };
 
     if (images.length > 0) {
@@ -260,11 +263,54 @@ export class BezrealitkyScraper {
     return formattedPrice;
   }
 
-  private formatArea(surface?: number): string | undefined {
-    if (!surface || surface <= 0) {
+  private resolveAreaValue(surface?: number): number | undefined {
+    if (!surface || surface <= 0 || !Number.isFinite(surface)) {
       return undefined;
     }
-    return `${surface} m²`;
+    return surface;
+  }
+
+  private formatArea(surface?: number): string | undefined {
+    if (typeof surface !== "number" || surface <= 0) {
+      return undefined;
+    }
+    return Number.isInteger(surface)
+      ? surface.toString()
+      : surface.toFixed(1).replace(/\.0$/, "");
+  }
+
+  private resolvePricePerSqm(
+    advert: any,
+    priceNumber?: number,
+    areaValue?: number
+  ): number | undefined {
+    const candidateKeys = [
+      "pricePerSqm",
+      "pricePerM2",
+      "pricePerMeter",
+      "pricePerSquareMeter",
+      "price_per_sqm",
+    ];
+
+    for (const key of candidateKeys) {
+      const value = advert?.[key];
+      if (typeof value === "number" && Number.isFinite(value) && value > 0) {
+        return Math.round(value);
+      }
+    }
+
+    if (
+      typeof priceNumber === "number" &&
+      Number.isFinite(priceNumber) &&
+      priceNumber > 0 &&
+      typeof areaValue === "number" &&
+      Number.isFinite(areaValue) &&
+      areaValue > 0
+    ) {
+      return Math.round(priceNumber / areaValue);
+    }
+
+    return undefined;
   }
 
   private formatRooms(disposition: string): string {

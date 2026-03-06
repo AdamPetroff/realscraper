@@ -13,6 +13,13 @@ async function logProperty(property: Property, index: number): Promise<void> {
   console.log(`Price: ${property.price || "N/A"}`);
   console.log(`Location: ${property.location || "N/A"}`);
   console.log(`Area: ${property.area || "N/A"}`);
+  console.log(
+    `Price per m²: ${
+      typeof property.pricePerSqm === "number"
+        ? `${new Intl.NumberFormat("cs-CZ").format(property.pricePerSqm)} Kč/m²`
+        : "N/A"
+    }`
+  );
   console.log(`Rooms: ${property.rooms || "N/A"}`);
   console.log(`URL: ${property.url || "N/A"}`);
   if (property.description) {
@@ -44,21 +51,9 @@ function parseCli(): { url: string; options: ScrapeOptions } {
     // Build URL from config (with optional env overrides)
     const config: BezrealitkyScraperConfig = {
       ...DEFAULT_BEZREALITKY_CONFIG,
-      ...(process.env.BEZREALITKY_DISPOSITIONS
-        ? { dispositions: process.env.BEZREALITKY_DISPOSITIONS.split(",") }
-        : {}),
-      ...(process.env.BEZREALITKY_PRICE_FROM
-        ? { priceFrom: parseInt(process.env.BEZREALITKY_PRICE_FROM) }
-        : {}),
-      ...(process.env.BEZREALITKY_PRICE_TO
-        ? { priceTo: parseInt(process.env.BEZREALITKY_PRICE_TO) }
-        : {}),
-      ...(process.env.BEZREALITKY_OSM_VALUE
-        ? { osmValue: process.env.BEZREALITKY_OSM_VALUE }
-        : {}),
-      ...(process.env.BEZREALITKY_REGION_OSM_IDS
-        ? { regionOsmIds: process.env.BEZREALITKY_REGION_OSM_IDS }
-        : {}),
+      newOnly: false,
+      priceFrom: 0,
+      priceTo: 10_000_000
     };
     targetUrl = buildBezrealitkyUrl(config);
   }

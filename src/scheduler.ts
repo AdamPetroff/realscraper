@@ -21,6 +21,7 @@ import {
   isSupabaseAvailable,
   processProperties,
 } from "./db";
+import { filterPropertiesByTitleBlacklist } from "./property-filters";
 
 type ScraperInstance =
   | IdnesScraper
@@ -209,6 +210,16 @@ export class PropertyScheduler {
       console.log(
         `📊 [${label}] ${type} returned ${properties.length} properties`
       );
+
+      const { filteredProperties, filteredOutCount } =
+        filterPropertiesByTitleBlacklist(properties);
+      properties = filteredProperties;
+
+      if (filteredOutCount > 0) {
+        console.log(
+          `🚫 [${label}] Filtered ${filteredOutCount} properties by title blacklist`
+        );
+      }
 
       // Process properties through database (if available)
       const { results, newCount, priceChangeCount, skippedCount } = 

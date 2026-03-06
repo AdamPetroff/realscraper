@@ -24,6 +24,8 @@ interface SrealityEstate {
   priceCzk?: number;
   priceSummaryCzk?: number;
   priceCzkPerSqM?: number;
+  surface?: number;
+  usableArea?: number;
   categoryTypeCb?: { name?: string; value?: number };
   categoryMainCb?: { name?: string; value?: number };
   categorySubCb?: { name?: string; value?: number };
@@ -264,9 +266,11 @@ export class SrealityScraper {
       return null;
     }
 
-    // Extract area and rooms from title
-    const area = this.extractArea(title);
+    // Extract area and rooms
+    const areaSqm = this.resolveAreaSqm(estate, title);
+    const area = areaSqm ? this.formatArea(areaSqm) : undefined;
     const rooms = estate.categorySubCb?.name || this.extractRooms(title) || "";
+    const pricePerSqm = this.resolvePricePerSqm(estate, priceValue, areaSqm);
 
     // Extract images
     const images: string[] = [];
@@ -297,6 +301,7 @@ export class SrealityScraper {
       source: "sreality",
       sourceId: String(estate.id),
       priceNumeric: priceValue || undefined,
+      pricePerSqm,
     };
 
     if (images.length > 0) {
@@ -338,7 +343,49 @@ export class SrealityScraper {
 
   private extractArea(title: string): string | undefined {
     const match = title.match(/(\d+(?:[.,]\d+)?)\s*m²?/i);
-    return match ? `${match[1]} m²` : undefined;
+    return match ? match[1].replace(",", ".") : undefined;
+  }
+
+  private parseAreaValue(area?: string): number | undefined {
+    if (!area) return undefined;
+    const match = area.match(/(\d+(?:[.,]\d+)?)/);
+    if (!match) return undefined;
+    const parsed = Number.parseFloat(match[1].replace(",", "."));
+    if (!Number.isFinite(parsed) || parsed <= 0) return undefined;
+    return parsed;
+  }
+
+  private resolveAreaSqm(estate: SrealityEstate, title: string): number | undefined {
+    const numericCandidates = [estate.surface, estate.usableArea];
+    for (const candidate of numericCandidates) {
+      if (typeof candidate === "number" && Number.isFinite(candidate) && candidate > 0) {
+        return candidate;
+      }
+    }
+
+    const areaFromTitle = this.extractArea(title);
+    return this.parseAreaValue(areaFromTitle);
+  }
+
+  private formatArea(areaSqm: number): string {
+    const normalized = Number.isInteger(areaSqm)
+      ? areaSqm.toString()
+      : areaSqm.toFixed(1).replace(/\.0$/, "");
+    return normalized;
+  }
+
+  private resolvePricePerSqm(
+    estate: SrealityEstate,
+    priceValue?: number,
+    areaSqm?: number
+  ): number | undefined {
+    if (typeof estate.priceCzkPerSqM === "number" && estate.priceCzkPerSqM > 0) {
+      return Math.round(estate.priceCzkPerSqM);
+    }
+    if (typeof priceValue === "number" && typeof areaSqm === "number" && areaSqm > 0) {
+      return Math.round(priceValue / areaSqm);
+    }
+    return undefined;
   }
 
   private extractRooms(title: string): string {

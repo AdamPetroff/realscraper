@@ -1,10 +1,22 @@
 import { BazosScraper } from "../src/scrapers/BazosScraper";
 import {
-  DEFAULT_BAZOS_CONFIG,
   buildBazosUrl,
-  BazosScraperConfig,
+  type BazosScraperConfig,
 } from "../src/config";
 import { Property } from "../src/types";
+import { SCRAPES, type BazosScrapeConfig } from "../src/scrape-configs";
+
+function getDefaultBazosConfig(): BazosScraperConfig {
+  const scrape = SCRAPES.find(
+    (entry): entry is BazosScrapeConfig => entry.type === "bazos"
+  );
+
+  if (!scrape) {
+    throw new Error("No Bazos scrape config found in SCRAPES");
+  }
+
+  return { ...scrape.config, recentOnly: false };
+}
 
 async function logProperty(property: Property, index: number): Promise<void> {
   console.log(`\n=== Bazos Property ${index + 1} ===`);
@@ -12,6 +24,13 @@ async function logProperty(property: Property, index: number): Promise<void> {
   console.log(`Price: ${property.price || "N/A"}`);
   console.log(`Location: ${property.location || "N/A"}`);
   console.log(`Area: ${property.area || "N/A"}`);
+  console.log(
+    `Price per m²: ${
+      typeof property.pricePerSqm === "number"
+        ? `${new Intl.NumberFormat("cs-CZ").format(property.pricePerSqm)} Kč/m²`
+        : "N/A"
+    }`
+  );
   console.log(`Rooms: ${property.rooms || "N/A"}`);
   console.log(`URL: ${property.url || "N/A"}`);
   console.log(`From today: ${property.isNew ? "Yes" : "No"}`);
@@ -48,7 +67,7 @@ function parseCli(): { url: string; includeAll: boolean } {
   } else {
     // Build URL from config (with optional env overrides)
     const config: BazosScraperConfig = {
-      ...DEFAULT_BAZOS_CONFIG,
+      ...getDefaultBazosConfig(),
       ...(process.env.BAZOS_LOCATION_CODE
         ? { locationCode: process.env.BAZOS_LOCATION_CODE }
         : {}),

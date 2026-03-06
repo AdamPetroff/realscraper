@@ -1,10 +1,22 @@
 import { IdnesScraper } from "../src/scrapers/IdnesScraper";
 import {
-  DEFAULT_IDNES_CONFIG,
   buildIdnesUrl,
-  IdnesScraperConfig,
+  type IdnesScraperConfig,
 } from "../src/config";
 import { Property } from "../src/types";
+import { SCRAPES, type IdnesScrapeConfig } from "../src/scrape-configs";
+
+function getDefaultIdnesConfig(): IdnesScraperConfig {
+  const scrape = SCRAPES.find(
+    (entry): entry is IdnesScrapeConfig => entry.type === "idnes"
+  );
+
+  if (!scrape) {
+    throw new Error("No IDNES scrape config found in SCRAPES");
+  }
+
+  return { ...scrape.config, articleAge: "7" };
+}
 
 async function logProperty(property: Property, index: number): Promise<void> {
   console.log(`\n=== Property ${index + 1} ===`);
@@ -12,6 +24,13 @@ async function logProperty(property: Property, index: number): Promise<void> {
   console.log(`Price: ${property.price || "N/A"}`);
   console.log(`Location: ${property.location || "N/A"}`);
   console.log(`Area: ${property.area || "N/A"}`);
+  console.log(
+    `Price per m²: ${
+      typeof property.pricePerSqm === "number"
+        ? `${new Intl.NumberFormat("cs-CZ").format(property.pricePerSqm)} Kč/m²`
+        : "N/A"
+    }`
+  );
   console.log(`Rooms: ${property.rooms || "N/A"}`);
   console.log(`URL: ${property.url || "N/A"}`);
   console.log(`Images: ${property.images?.length || 0}`);
@@ -34,7 +53,7 @@ async function main(): Promise<void> {
 
     // You can modify these constants to adjust the search parameters
     const config: IdnesScraperConfig = {
-      ...DEFAULT_IDNES_CONFIG,
+      ...getDefaultIdnesConfig(),
       // Uncomment and modify any of these to override defaults:
       // priceMin: 2000000,
       // priceMax: 5000000,

@@ -6,7 +6,7 @@
 set -e  # Exit on error
 
 # Configuration
-SERVER="hostinger"  # Uses SSH config alias (see ~/.ssh/config)
+SERVER="root@72.62.145.103"  # Uses SSH config alias (see ~/.ssh/config)
 REMOTE_PATH="/opt/reality-scraper"
 LOCAL_PATH="$(dirname "$0")/.."
 

@@ -1,10 +1,22 @@
 import { SrealityScraper } from "../src/scrapers/SrealityScraper";
 import {
-  DEFAULT_SREALITY_CONFIG,
   buildSrealityUrl,
-  SrealityScraperConfig,
+  type SrealityScraperConfig,
 } from "../src/config";
 import { Property } from "../src/types";
+import { SCRAPES, type SrealityScrapeConfig } from "../src/scrape-configs";
+
+function getDefaultSrealityConfig(): SrealityScraperConfig {
+  const scrape = SCRAPES.find(
+    (entry): entry is SrealityScrapeConfig => entry.type === "sreality"
+  );
+
+  if (!scrape) {
+    throw new Error("No Sreality scrape config found in SCRAPES");
+  }
+
+  return { ...scrape.config, age: "tyden" };
+}
 
 async function logProperty(property: Property, index: number): Promise<void> {
   console.log(`\n=== Property ${index + 1} ===`);
@@ -12,6 +24,13 @@ async function logProperty(property: Property, index: number): Promise<void> {
   console.log(`Price: ${property.price || "N/A"}`);
   console.log(`Location: ${property.location || "N/A"}`);
   console.log(`Area: ${property.area || "N/A"}`);
+  console.log(
+    `Price per m²: ${
+      typeof property.pricePerSqm === "number"
+        ? `${new Intl.NumberFormat("cs-CZ").format(property.pricePerSqm)} Kč/m²`
+        : "N/A"
+    }`
+  );
   console.log(`Rooms: ${property.rooms || "N/A"}`);
   console.log(`URL: ${property.url || "N/A"}`);
   console.log(`Images: ${property.images?.length || 0}`);
@@ -34,7 +53,7 @@ async function main(): Promise<void> {
     await scraper.initialize();
 
     const config: SrealityScraperConfig = {
-      ...DEFAULT_SREALITY_CONFIG,
+      ...getDefaultSrealityConfig(),
       // You can override default config here for testing
       // e.g., priceMax: 7000000,
       // locationSlug: "praha",
