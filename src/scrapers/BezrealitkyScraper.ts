@@ -1,6 +1,7 @@
 import * as cheerio from "cheerio";
 import { Property } from "../types";
 import { ScrapeOptions } from "./scraper.interface";
+import { extractLocationMetadata } from "./location-metadata";
 
 type ApolloCache = Record<string, any>;
 
@@ -201,6 +202,7 @@ export class BezrealitkyScraper {
     const url = this.buildListingUrl(uri);
     const images = this.extractImages(advert[publicImagesKey], apolloCache);
     const isNew = this.detectIsNew(advert);
+    const { district, region } = extractLocationMetadata(location);
 
     if (!title || !price || !url) {
       return null;
@@ -210,6 +212,8 @@ export class BezrealitkyScraper {
       title,
       price,
       location,
+      district,
+      region,
       area,
       rooms,
       url,

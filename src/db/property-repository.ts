@@ -7,6 +7,8 @@ export interface DbProperty {
   source_id: string;
   title: string | null;
   location: string | null;
+  district: string | null;
+  region: string | null;
   area: string | null;
   rooms: string | null;
   url: string;
@@ -95,6 +97,8 @@ export async function upsertProperty(property: Property): Promise<string | null>
         source_id: property.sourceId,
         title: property.title,
         location: property.location,
+        district: property.district || null,
+        region: property.region || null,
         area: normalizeAreaForDb(property.area),
         rooms: property.rooms || null,
         url: property.url,

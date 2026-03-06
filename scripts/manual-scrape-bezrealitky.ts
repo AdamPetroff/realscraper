@@ -12,6 +12,8 @@ async function logProperty(property: Property, index: number): Promise<void> {
   console.log(`Title: ${property.title || "N/A"}`);
   console.log(`Price: ${property.price || "N/A"}`);
   console.log(`Location: ${property.location || "N/A"}`);
+  console.log(`District (Okres): ${property.district || "N/A"}`);
+  console.log(`Region (Kraj): ${property.region || "N/A"}`);
   console.log(`Area: ${property.area || "N/A"}`);
   console.log(
     `Price per m²: ${

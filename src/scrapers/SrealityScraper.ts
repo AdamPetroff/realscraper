@@ -293,6 +293,8 @@ export class SrealityScraper {
       title,
       price,
       location,
+      district: locality.district,
+      region: locality.region,
       area,
       rooms,
       url,

@@ -1,6 +1,7 @@
 import * as cheerio from "cheerio";
 import { Property } from "../types";
 import { ScrapeOptions } from "./scraper.interface";
+import { extractLocationMetadata } from "./location-metadata";
 
 export class IdnesScraper {
   constructor(private readonly defaultOptions: ScrapeOptions = {}) {}
@@ -62,6 +63,8 @@ export class IdnesScraper {
           const propertyUrl = this.extractUrl($item, url);
           const priceText = this.extractText($item, [".c-products__price"]);
           const priceNumeric = this.parseNumericPrice(priceText);
+          const location = this.extractText($item, [".c-products__info"]);
+          const { district, region } = extractLocationMetadata(location);
           const areaText = this.extractText($item, [".c-products__info .floor-area"]);
           const areaValue =
             this.parseAreaValue(areaText) ||
@@ -70,7 +73,9 @@ export class IdnesScraper {
           const property: Property = {
             title: this.extractText($item, [".c-products__title"]),
             price: priceText,
-            location: this.extractText($item, [".c-products__info"]),
+            location,
+            district,
+            region,
             area: this.formatAreaValue(areaValue),
             rooms: this.extractText($item, [".c-products__info .rooms"]),
             url: propertyUrl,

@@ -1,6 +1,7 @@
 import * as cheerio from "cheerio";
 import type { Property } from "../types";
 import type { ScrapeOptions } from "./scraper.interface";
+import { extractLocationMetadata } from "./location-metadata";
 
 export class BazosScraper {
   constructor(private readonly defaultOptions: ScrapeOptions = {}) {}
@@ -151,6 +152,11 @@ export class BazosScraper {
         .replace(/<br\s*\/?>/gi, ", ")
         .replace(/<[^>]+>/g, "")
         .trim();
+      const { district, region } = extractLocationMetadata(
+        location,
+        title,
+        description
+      );
 
       // Extract image
       const $img = $item.find("img.obrazek").first();
@@ -178,6 +184,8 @@ export class BazosScraper {
         title,
         price,
         location,
+        district,
+        region,
         area,
         rooms,
         url: propertyUrl,
