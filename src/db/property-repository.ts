@@ -41,6 +41,18 @@ function normalizeAreaForDb(area?: string): string | null {
     : value.toFixed(2).replace(/\.?0+$/, "");
 }
 
+function normalizeIntegerForDb(value?: number | null): number | null {
+  if (value === null || value === undefined) {
+    return null;
+  }
+
+  if (!Number.isFinite(value)) {
+    return null;
+  }
+
+  return Math.round(value);
+}
+
 /**
  * Find a property by source and sourceId.
  */
@@ -103,8 +115,8 @@ export async function upsertProperty(property: Property): Promise<string | null>
         rooms: property.rooms || null,
         url: property.url,
         price_formatted: property.price,
-        price_numeric: property.priceNumeric || null,
-        price_per_sqm: property.pricePerSqm || null,
+        price_numeric: normalizeIntegerForDb(property.priceNumeric),
+        price_per_sqm: normalizeIntegerForDb(property.pricePerSqm),
         last_seen_at: now,
         updated_at: now,
       },
@@ -170,7 +182,7 @@ export async function updatePropertyPrice(
     .from("properties")
     .update({
       price_formatted: priceFormatted,
-      price_numeric: priceNumeric,
+      price_numeric: normalizeIntegerForDb(priceNumeric),
       last_seen_at: now,
       updated_at: now,
     })
