@@ -66,8 +66,14 @@ function parseNumericPrice(priceText: string): number | undefined {
   if (priceText.toLowerCase() === "zdarma") return 0;
   if (priceText.toLowerCase().includes("vyžádání")) return undefined;
 
-  // Remove all non-digit characters
-  const cleaned = priceText.replace(/[^\d]/g, "");
+  const normalized = priceText.replace(/\u00a0/g, " ").trim();
+  const amountMatch =
+    normalized.match(/(\d[\d\s.,]*)\s*(?:Kč|CZK)/i) ??
+    normalized.match(/(\d[\d\s.,]*)/);
+
+  if (!amountMatch) return undefined;
+
+  const cleaned = amountMatch[1].replace(/[^\d]/g, "");
   const num = parseInt(cleaned, 10);
 
   return isNaN(num) ? undefined : num;
@@ -209,9 +215,7 @@ describe("Numeric Price Parsing", () => {
 
   it("should handle prices with charges notation", () => {
     // "3 500 000 Kč + 5 000 Kč" should extract 3500000 (first number)
-    expect(parseNumericPrice("3 500 000 Kč + 5 000 Kč")).toBe(35000005000);
-    // Note: This extracts all digits, which may not be ideal for charges format
-    // The actual scrapers handle charges separately
+    expect(parseNumericPrice("3 500 000 Kč + 5 000 Kč")).toBe(3500000);
   });
 
   it("should parse small prices", () => {
@@ -231,7 +235,11 @@ describe("Price Parsing - Edge Cases", () => {
 
   it("should handle price per m²", () => {
     expect(parseNumericPrice("85 000 Kč/m²")).toBe(85000);
-    // Note: ² is not a digit so it's not included
+  });
+
+  it("should ignore trailing price-per-sqm values from combined text", () => {
+    expect(parseNumericPrice("1 320 000 Kč 19 961 Kč/m²")).toBe(1320000);
+    expect(parseNumericPrice("1 600 000 Kč16 348 Kč za m²")).toBe(1600000);
   });
 
   it("should ignore non-numeric characters", () => {

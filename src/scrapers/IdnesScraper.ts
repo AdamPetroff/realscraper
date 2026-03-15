@@ -167,8 +167,14 @@ export class IdnesScraper {
   private parseNumericPrice(priceText: string): number | undefined {
     if (!priceText) return undefined;
 
-    // Remove all non-digit characters except for decimal separators
-    const cleaned = priceText.replace(/[^\d]/g, "");
+    const normalized = priceText.replace(/\u00a0/g, " ").trim();
+    const amountMatch =
+      normalized.match(/(\d[\d\s.,]*)\s*(?:Kč|CZK)/i) ??
+      normalized.match(/(\d[\d\s.,]*)/);
+
+    if (!amountMatch) return undefined;
+
+    const cleaned = amountMatch[1].replace(/[^\d]/g, "");
     const num = parseInt(cleaned, 10);
 
     return isNaN(num) ? undefined : num;
