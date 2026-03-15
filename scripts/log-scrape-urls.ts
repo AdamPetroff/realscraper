@@ -22,6 +22,7 @@ function main(): void {
     for (const scrape of scrapes) {
       const status = scrape.enabled === false ? "❌ DISABLED" : "✅";
       console.log(`\n  ${status} ${scrape.label}`);
+      console.log(`     id: ${scrape.id}`);
       console.log(`     ${buildUrlForScrape(scrape)}`);
     }
   }

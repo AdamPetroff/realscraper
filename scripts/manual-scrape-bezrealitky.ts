@@ -6,6 +6,39 @@ import {
 } from "../src/config";
 import { Property } from "../src/types";
 import { ScrapeOptions } from "../src/scrapers/scraper.interface";
+import {
+  SCRAPES,
+  getScrapeById,
+  type BezrealitkyScrapeConfig,
+} from "../src/scrape-configs";
+
+function getDefaultBezrealitkyConfig(): BezrealitkyScraperConfig {
+  const scrape = SCRAPES.find(
+    (entry): entry is BezrealitkyScrapeConfig => entry.type === "bezrealitky"
+  );
+
+  if (!scrape) {
+    throw new Error("No Bezrealitky scrape config found in SCRAPES");
+  }
+
+  return { ...scrape.config, newOnly: false };
+}
+
+function getBezrealitkyConfigById(id: string): BezrealitkyScraperConfig {
+  const scrape = getScrapeById(id);
+
+  if (!scrape) {
+    throw new Error(`Unknown scrape ID "${id}"`);
+  }
+
+  if (scrape.type !== "bezrealitky") {
+    throw new Error(
+      `Scrape ID "${id}" is for ${scrape.type}, not bezrealitky`
+    );
+  }
+
+  return { ...scrape.config, newOnly: false };
+}
 
 async function logProperty(property: Property, index: number): Promise<void> {
   console.log(`\n=== Bezrealitky Property ${index + 1} ===`);
@@ -42,22 +75,28 @@ function parseCli(): { url: string; options: ScrapeOptions } {
   const rawArgs = process.argv.slice(2);
 
   const options: ScrapeOptions = {};
+  const idFlagIndex = rawArgs.indexOf("--id");
+  const idFromFlag =
+    idFlagIndex >= 0 ? rawArgs[idFlagIndex + 1] : undefined;
+  const positionalArg = rawArgs.find((arg) => !arg.startsWith("--"));
+  const scrapeId =
+    idFromFlag ?? (positionalArg && getScrapeById(positionalArg) ? positionalArg : undefined);
 
-  // Allow custom URL as first argument for backward compatibility
-  const urlArg = rawArgs.find((arg) => !arg.startsWith("--"));
+  const urlArg = positionalArg && scrapeId !== positionalArg ? positionalArg : undefined;
 
   let targetUrl: string;
-  if (urlArg) {
+  if (scrapeId) {
+    const config = getBezrealitkyConfigById(scrapeId);
+    targetUrl = buildBezrealitkyUrl(config);
+    options.newOnly = config.newOnly;
+  } else if (urlArg) {
     targetUrl = urlArg;
   } else {
-    // Build URL from config (with optional env overrides)
     const config: BezrealitkyScraperConfig = {
-      ...DEFAULT_BEZREALITKY_CONFIG,
-      newOnly: false,
-      priceFrom: 0,
-      priceTo: 10_000_000
+      ...getDefaultBezrealitkyConfig(),
     };
     targetUrl = buildBezrealitkyUrl(config);
+    options.newOnly = config.newOnly;
   }
 
   if (
@@ -65,7 +104,7 @@ function parseCli(): { url: string; options: ScrapeOptions } {
     process.env.BEZREALITKY_NEW_ONLY === "true"
   ) {
     options.newOnly = true;
-  } else {
+  } else if (typeof options.newOnly !== "boolean") {
     options.newOnly = DEFAULT_BEZREALITKY_CONFIG.newOnly || false;
   }
 

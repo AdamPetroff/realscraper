@@ -4,7 +4,11 @@ import {
   type BazosScraperConfig,
 } from "../src/config";
 import { Property } from "../src/types";
-import { SCRAPES, type BazosScrapeConfig } from "../src/scrape-configs";
+import {
+  SCRAPES,
+  getScrapeById,
+  type BazosScrapeConfig,
+} from "../src/scrape-configs";
 
 function getDefaultBazosConfig(): BazosScraperConfig {
   const scrape = SCRAPES.find(
@@ -13,6 +17,20 @@ function getDefaultBazosConfig(): BazosScraperConfig {
 
   if (!scrape) {
     throw new Error("No Bazos scrape config found in SCRAPES");
+  }
+
+  return { ...scrape.config, recentOnly: false };
+}
+
+function getBazosConfigById(id: string): BazosScraperConfig {
+  const scrape = getScrapeById(id);
+
+  if (!scrape) {
+    throw new Error(`Unknown scrape ID "${id}"`);
+  }
+
+  if (scrape.type !== "bazos") {
+    throw new Error(`Scrape ID "${id}" is for ${scrape.type}, not bazos`);
   }
 
   return { ...scrape.config, recentOnly: false };
@@ -57,17 +75,21 @@ async function logProperty(property: Property, index: number): Promise<void> {
 function parseCli(): { url: string; includeAll: boolean } {
   const rawArgs = process.argv.slice(2);
 
-  // --all flag to include all listings, not just recent ones
   const includeAll = rawArgs.includes("--all");
-
-  // Allow custom URL as first argument
-  const urlArg = rawArgs.find((arg) => !arg.startsWith("--"));
+  const idFlagIndex = rawArgs.indexOf("--id");
+  const idFromFlag =
+    idFlagIndex >= 0 ? rawArgs[idFlagIndex + 1] : undefined;
+  const positionalArg = rawArgs.find((arg) => !arg.startsWith("--"));
+  const scrapeId =
+    idFromFlag ?? (positionalArg && getScrapeById(positionalArg) ? positionalArg : undefined);
+  const urlArg = positionalArg && scrapeId !== positionalArg ? positionalArg : undefined;
 
   let targetUrl: string;
-  if (urlArg) {
+  if (scrapeId) {
+    targetUrl = buildBazosUrl(getBazosConfigById(scrapeId));
+  } else if (urlArg) {
     targetUrl = urlArg;
   } else {
-    // Build URL from config (with optional env overrides)
     const config: BazosScraperConfig = {
       ...getDefaultBazosConfig(),
       ...(process.env.BAZOS_LOCATION_CODE
@@ -137,4 +159,3 @@ async function main(): Promise<void> {
 if (require.main === module) {
   main();
 }
-

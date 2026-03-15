@@ -271,10 +271,20 @@ export class BazosScraper {
   }
 
   private extractAreaValue(text: string): number | undefined {
-    // Look for patterns like "60m2", "60 m²", "60m²", "60 m2"
-    const match = text.match(/(\d+(?:[.,]\d+)?)\s*m[²2]/i);
+    // Support plain, decimal, and thousand-grouped formats like
+    // "60 m2", "1 273 m²", and "1.888 m2".
+    const match = text.match(
+      /((?:\d{1,3}(?:[ .\u00a0]\d{3})+)|(?:\d+(?:[.,]\d+)?))\s*m[²2]/i
+    );
     if (!match) return undefined;
-    const area = Number.parseFloat(match[1].replace(",", "."));
+
+    const rawValue = match[1].replace(/\u00a0/g, " ").trim();
+    const isThousandsFormatted = /(?:\d{1,3}(?:[ .]\d{3})+)/.test(rawValue);
+    const normalizedValue = isThousandsFormatted
+      ? rawValue.replace(/[ .]/g, "")
+      : rawValue.replace(",", ".");
+
+    const area = Number.parseFloat(normalizedValue);
     if (!Number.isFinite(area) || area <= 0) return undefined;
     return area;
   }

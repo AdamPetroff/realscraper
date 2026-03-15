@@ -269,7 +269,7 @@ export class SrealityScraper {
     // Extract area and rooms
     const areaSqm = this.resolveAreaSqm(estate, title);
     const area = areaSqm ? this.formatArea(areaSqm) : undefined;
-    const rooms = estate.categorySubCb?.name || this.extractRooms(title) || "";
+    const rooms = this.resolveRooms(estate, title);
     const pricePerSqm = this.resolvePricePerSqm(estate, priceValue, areaSqm);
 
     // Extract images
@@ -393,6 +393,20 @@ export class SrealityScraper {
   private extractRooms(title: string): string {
     const match = title.match(/(\d+\s*\+\s*(?:kk|\d+))/i);
     return match ? match[1].replace(/\s+/g, "") : "";
+  }
+
+  private resolveRooms(estate: SrealityEstate, title: string): string {
+    const titleRooms = this.extractRooms(title);
+    if (titleRooms) {
+      return titleRooms;
+    }
+
+    const categorySubName = estate.categorySubCb?.name;
+    if (!categorySubName) {
+      return "";
+    }
+
+    return this.extractRooms(categorySubName);
   }
 
   async close(): Promise<void> {
