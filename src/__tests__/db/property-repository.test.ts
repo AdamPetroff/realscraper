@@ -29,6 +29,7 @@ function createTestProperty(overrides: Partial<Property> = {}): Property {
     source: "idnes",
     sourceId: `${TEST_PREFIX}_${Math.random().toString(36).substr(2, 9)}`,
     priceNumeric: 3500000,
+    propertyType: "apartment",
     ...overrides,
   };
 }
@@ -132,6 +133,7 @@ describe("Property Repository - Database Integration Tests", () => {
         expect(found?.source_id).toBe(sourceId);
         expect(found?.title).toBe(property.title);
         expect(found?.price_numeric).toBe(property.priceNumeric);
+        expect(found?.property_type).toBe(property.propertyType);
       });
 
       it("should return null for non-existent property", async () => {

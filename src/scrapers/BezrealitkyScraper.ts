@@ -1,5 +1,5 @@
 import * as cheerio from "cheerio";
-import { Property } from "../types";
+import { Property, type PropertyType } from "../types";
 import { ScrapeOptions } from "./scraper.interface";
 import { extractLocationMetadata } from "./location-metadata";
 
@@ -224,6 +224,7 @@ export class BezrealitkyScraper {
       sourceId: uri, // Use URI as the unique identifier
       priceNumeric: priceNumber,
       pricePerSqm,
+      propertyType: this.resolvePropertyType(uri, title),
     };
 
     if (images.length > 0) {
@@ -246,6 +247,27 @@ export class BezrealitkyScraper {
     }
 
     return false;
+  }
+
+  private resolvePropertyType(
+    uri: string,
+    title: string,
+  ): PropertyType | undefined {
+    const haystack = `${uri} ${title}`.toLowerCase();
+
+    if (haystack.includes("pozem")) {
+      return "land";
+    }
+
+    if (haystack.includes("domu") || haystack.includes("dum")) {
+      return "house";
+    }
+
+    if (haystack.includes("bytu") || haystack.includes("byt")) {
+      return "apartment";
+    }
+
+    return undefined;
   }
 
   private formatPrice(

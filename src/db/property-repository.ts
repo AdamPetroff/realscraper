@@ -1,5 +1,10 @@
 import { getSupabase, isSupabaseAvailable } from "./supabase";
-import type { Property, PropertyWithPriceChange, ScraperSource } from "../types";
+import type {
+  Property,
+  PropertyType,
+  PropertyWithPriceChange,
+  ScraperSource,
+} from "../types";
 
 export interface DbProperty {
   id: string;
@@ -15,6 +20,7 @@ export interface DbProperty {
   price_formatted: string | null;
   price_numeric: number | null;
   price_per_sqm: number | null;
+  property_type: PropertyType | null;
   first_seen_at: string;
   last_seen_at: string;
   created_at: string;
@@ -117,6 +123,7 @@ export async function upsertProperty(property: Property): Promise<string | null>
         price_formatted: property.price,
         price_numeric: normalizeIntegerForDb(property.priceNumeric),
         price_per_sqm: normalizeIntegerForDb(property.pricePerSqm),
+        property_type: property.propertyType || "apartment",
         last_seen_at: now,
         updated_at: now,
       },

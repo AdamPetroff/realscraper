@@ -1,5 +1,5 @@
 import * as cheerio from "cheerio";
-import type { Property } from "../types";
+import type { Property, PropertyType } from "../types";
 import type { ScrapeOptions } from "./scraper.interface";
 import { extractLocationMetadata } from "./location-metadata";
 
@@ -64,6 +64,7 @@ export class BazosScraper {
     console.log(`BazosScraper: Fetching URL: ${url}`);
 
     try {
+      const propertyType = this.inferPropertyTypeFromSearchUrl(url);
       const response = await fetch(url, {
         headers: this.getHeaders(),
       });
@@ -84,7 +85,7 @@ export class BazosScraper {
       // Based on the HTML structure, listings appear in a table-like structure
       $("div.inzeraty").each((_, element) => {
         const $item = $(element);
-        const property = this.parseListingItem($item, $);
+        const property = this.parseListingItem($item, $, propertyType);
         
         if (property) {
           properties.push(property);
@@ -108,7 +109,8 @@ export class BazosScraper {
 
   private parseListingItem(
     $item: cheerio.Cheerio<any>,
-    $: cheerio.CheerioAPI
+    $: cheerio.CheerioAPI,
+    propertyType?: PropertyType,
   ): Property | null {
     try {
       // Find the title link - it's in h2.nadpis a
@@ -198,6 +200,7 @@ export class BazosScraper {
         sourceId: this.extractIdFromUrl(propertyUrl),
         priceNumeric,
         pricePerSqm: this.resolvePricePerSqm(priceNumeric, areaValue),
+        propertyType,
       };
 
       if (images.length > 0) {
@@ -209,6 +212,28 @@ export class BazosScraper {
       console.error("BazosScraper: Error parsing listing item:", error);
       return null;
     }
+  }
+
+  private inferPropertyTypeFromSearchUrl(url: string): PropertyType | undefined {
+    try {
+      const pathname = new URL(url).pathname.toLowerCase();
+
+      if (pathname.includes("/dum/")) {
+        return "house";
+      }
+
+      if (pathname.includes("/pozemek/")) {
+        return "land";
+      }
+
+      if (pathname.includes("/byt/")) {
+        return "apartment";
+      }
+    } catch {
+      return undefined;
+    }
+
+    return undefined;
   }
 
   /**

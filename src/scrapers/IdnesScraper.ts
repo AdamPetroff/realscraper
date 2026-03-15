@@ -1,5 +1,5 @@
 import * as cheerio from "cheerio";
-import { Property } from "../types";
+import { Property, type PropertyType } from "../types";
 import { ScrapeOptions } from "./scraper.interface";
 import { extractLocationMetadata } from "./location-metadata";
 
@@ -86,6 +86,7 @@ export class IdnesScraper {
             sourceId: this.extractIdFromUrl(propertyUrl),
             priceNumeric,
             pricePerSqm: this.resolvePricePerSqm(priceNumeric, areaValue),
+            propertyType: this.extractPropertyTypeFromUrl(propertyUrl),
           };
 
           if (property.title && property.price) {
@@ -137,6 +138,26 @@ export class IdnesScraper {
     // Last resort: try to extract any long numeric sequence
     const numericMatch = url.match(/(\d{6,})/);
     return numericMatch ? numericMatch[1] : undefined;
+  }
+
+  private extractPropertyTypeFromUrl(url: string): PropertyType | undefined {
+    if (!url) return undefined;
+
+    const detailType = url.match(/\/detail\/[^/]+\/([^/]+)\//i)?.[1]?.toLowerCase();
+
+    if (detailType === "byt") {
+      return "apartment";
+    }
+
+    if (detailType === "pozemek") {
+      return "land";
+    }
+
+    if (detailType === "dum") {
+      return "house";
+    }
+
+    return undefined;
   }
 
   /**

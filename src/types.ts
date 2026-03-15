@@ -1,4 +1,5 @@
 export type ScraperSource = "idnes" | "bezrealitky" | "sreality" | "bazos";
+export type PropertyType = "apartment" | "land" | "house";
 
 export interface Property {
   title: string;
@@ -17,6 +18,7 @@ export interface Property {
   source?: ScraperSource;
   sourceId?: string;
   priceNumeric?: number;
+  propertyType?: PropertyType;
 }
 
 export interface PropertyWithPriceChange extends Property {

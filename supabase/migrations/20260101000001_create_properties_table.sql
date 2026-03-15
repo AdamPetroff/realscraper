@@ -11,6 +11,7 @@ CREATE TABLE properties (
   price_formatted TEXT,                  -- Display price (e.g., "3 500 000 Kč")
   price_numeric INTEGER,                 -- Numeric price for comparison
   price_per_sqm INTEGER,                 -- Price per square meter in CZK
+  property_type VARCHAR(50) DEFAULT 'apartment', -- 'apartment', 'land', 'house'
   first_seen_at TIMESTAMPTZ DEFAULT NOW(),
   last_seen_at TIMESTAMPTZ DEFAULT NOW(),
   created_at TIMESTAMPTZ DEFAULT NOW(),

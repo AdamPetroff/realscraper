@@ -1,5 +1,6 @@
 import * as cheerio from "cheerio";
 import type { Property } from "../types";
+import type { PropertyType } from "../types";
 import type { TelegramService } from "../telegram-service";
 import type { ScrapeOptions } from "./scraper.interface";
 
@@ -304,6 +305,7 @@ export class SrealityScraper {
       sourceId: String(estate.id),
       priceNumeric: priceValue || undefined,
       pricePerSqm,
+      propertyType: this.resolvePropertyType(estate),
     };
 
     if (images.length > 0) {
@@ -336,6 +338,24 @@ export class SrealityScraper {
 
     // Format: /detail/prodej/byt/2-kk/brno-kralovo-pole/1889518412
     return `https://www.sreality.cz/detail/${categoryType}/${categoryMain}/${categorySubSlug}/${locationSlug}/${estate.id}`;
+  }
+
+  private resolvePropertyType(estate: SrealityEstate): PropertyType | undefined {
+    const categoryMain = estate.categoryMainCb?.name?.toLowerCase();
+
+    if (categoryMain === "byty" || categoryMain === "byt") {
+      return "apartment";
+    }
+
+    if (categoryMain === "pozemky" || categoryMain === "pozemek") {
+      return "land";
+    }
+
+    if (categoryMain === "domy" || categoryMain === "dum") {
+      return "house";
+    }
+
+    return undefined;
   }
 
   private formatPrice(price: number, currency: string = "Kč"): string {
