@@ -317,7 +317,7 @@ export const SHARED_SCRAPES: SharedScrapeConfig[] = [
       priceMax: 10_000_000,
       ownership: "personal",
       onlyNew: false,
-      freshness: "month",
+      freshness: "today",
     },
     overrides: {
       idnes: {
@@ -574,18 +574,18 @@ function createBezrealitkyConfig(
             currency: "CZK",
             newOnly: search.onlyNew,
           }
-      : {
-          dispositions: toBezrealitkyDispositions(search.roomLayouts),
-          estateType: "BYT",
-          offerType: toBezrealitkyOfferType(search.offerType),
-          location: location.location ?? "exact",
-          osmValue: location.osmValue,
-          regionOsmIds: location.regionOsmIds,
-          priceFrom: search.priceMin ?? 0,
-          priceTo: search.priceMax ?? 0,
-          currency: "CZK",
-          newOnly: search.onlyNew,
-        };
+        : {
+            dispositions: toBezrealitkyDispositions(search.roomLayouts),
+            estateType: "BYT",
+            offerType: toBezrealitkyOfferType(search.offerType),
+            location: location.location ?? "exact",
+            osmValue: location.osmValue,
+            regionOsmIds: location.regionOsmIds,
+            priceFrom: search.priceMin ?? 0,
+            priceTo: search.priceMax ?? 0,
+            currency: "CZK",
+            newOnly: search.onlyNew,
+          };
 
   return {
     id: createScrapeId("bezrealitky", scrape.label),
@@ -640,19 +640,19 @@ function createSrealityConfig(
             areaMax: search.areaMax,
             newOnly: search.onlyNew,
           }
-      : {
-          offerType: toSrealityOfferType(search.offerType),
-          category: "byty",
-          locationSlug,
-          sizes: search.roomLayouts,
-          ownership: search.ownership === "personal" ? "osobni" : undefined,
-          age: toSrealityAge(search.freshness),
-          priceMin: search.priceMin,
-          priceMax: search.priceMax,
-          areaMin: search.areaMin,
-          areaMax: search.areaMax,
-          newOnly: search.onlyNew,
-        };
+        : {
+            offerType: toSrealityOfferType(search.offerType),
+            category: "byty",
+            locationSlug,
+            sizes: search.roomLayouts,
+            ownership: search.ownership === "personal" ? "osobni" : undefined,
+            age: toSrealityAge(search.freshness),
+            priceMin: search.priceMin,
+            priceMax: search.priceMax,
+            areaMin: search.areaMin,
+            areaMax: search.areaMax,
+            newOnly: search.onlyNew,
+          };
 
   return {
     id: createScrapeId("sreality", scrape.label),
