@@ -19,7 +19,7 @@ function getDefaultIdnesConfig(): IdnesScraperConfig {
     throw new Error("No IDNES scrape config found in SCRAPES");
   }
 
-  return { ...scrape.config, freshness: "week" };
+  return { ...scrape.config };
 }
 
 function getIdnesConfigById(id: string): IdnesScraperConfig {
@@ -33,7 +33,7 @@ function getIdnesConfigById(id: string): IdnesScraperConfig {
     throw new Error(`Scrape ID "${id}" is for ${scrape.type}, not idnes`);
   }
 
-  return { ...scrape.config, freshness: "week" };
+  return { ...scrape.config };
 }
 
 async function logProperty(property: Property, index: number): Promise<void> {
@@ -77,17 +77,21 @@ async function main(): Promise<void> {
     const positionalArg = rawArgs.find((arg) => !arg.startsWith("--"));
     const scrapeId =
       idFromFlag ?? (positionalArg && getScrapeById(positionalArg) ? positionalArg : undefined);
+    const urlArg = positionalArg && scrapeId !== positionalArg ? positionalArg : undefined;
 
-    const config: IdnesScraperConfig = {
-      ...(scrapeId ? getIdnesConfigById(scrapeId) : getDefaultIdnesConfig()),
-    };
-
-    const url = buildIdnesUrl(config);
+    const config = urlArg
+      ? undefined
+      : ({
+          ...(scrapeId ? getIdnesConfigById(scrapeId) : getDefaultIdnesConfig()),
+        } satisfies IdnesScraperConfig);
+    const url = urlArg ?? buildIdnesUrl(config!);
     console.log(`\nScraping URL: ${url}`);
     if (scrapeId) {
       console.log(`Scrape ID: ${scrapeId}`);
     }
-    if (config.propertyKind === "land") {
+    if (!config) {
+      console.log("Search parameters: direct URL");
+    } else if (config.propertyKind === "land") {
       console.log(`Search parameters:
       - Property kind: land
       - City: ${config.city}
@@ -96,6 +100,20 @@ async function main(): Promise<void> {
       - Price max: ${typeof config.priceMax === "number" ? config.priceMax.toLocaleString() : "N/A"} CZK
       - Ownership: ${config.ownership || "N/A"}
       - Room count filter: ${typeof config.roomCount === "number" ? config.roomCount : "N/A"}
+      ${config.freshness ? `- Freshness: ${config.freshness}` : ""}
+    `);
+    } else if (config.propertyKind === "house") {
+      console.log(`Search parameters:
+      - Property kind: house
+      - City/region: ${config.city}
+      - House subtype: ${config.houseSubtype || "N/A"}
+      - Price min: ${typeof config.priceMin === "number" ? config.priceMin.toLocaleString() : "N/A"} CZK
+      - Price max: ${typeof config.priceMax === "number" ? config.priceMax.toLocaleString() : "N/A"} CZK
+      - Min room count: ${typeof config.roomCount === "number" ? config.roomCount : "N/A"}
+      - Min area: ${typeof config.areaMin === "number" ? config.areaMin : "N/A"} m²
+      - Ownership: ${config.ownership || "N/A"}
+      - Condition: ${config.condition || "N/A"}
+      - Materials: ${config.material || "N/A"}
       ${config.freshness ? `- Freshness: ${config.freshness}` : ""}
     `);
     } else {

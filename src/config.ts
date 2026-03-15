@@ -24,20 +24,42 @@ export interface IdnesLandScraperConfig {
   freshness?: IdnesFreshness;
 }
 
+export interface IdnesHouseScraperConfig {
+  propertyKind: "house";
+  city: string;
+  priceMin?: number;
+  priceMax?: number;
+  houseSubtype?: string; // e.g. "house|turn-key"
+  roomCount?: number; // maps to both s-rd and s-qc[roomCount]
+  areaMin?: number;
+  ownership?: string; // e.g. "personal"
+  condition?: string; // e.g. "new|project|under-construction"
+  material?: string; // e.g. "brick|wood|stone|skeleton|prefab|mixed"
+  freshness?: IdnesFreshness;
+}
+
 export type IdnesScraperConfig =
   | IdnesApartmentScraperConfig
-  | IdnesLandScraperConfig;
+  | IdnesLandScraperConfig
+  | IdnesHouseScraperConfig;
 
 function toIdnesArticleAge(
   freshness?: IdnesFreshness,
-): "1" | "7" | "30" | undefined {
+): "1" | "7" | "30" | "31" | undefined {
   switch (freshness) {
     case "today":
       return "1";
     case "week":
       return "7";
-    case "month":
-      return "30";
+    case "month": {
+      const now = new Date();
+      const daysInCurrentMonth = new Date(
+        now.getFullYear(),
+        now.getMonth() + 1,
+        0,
+      ).getDate();
+      return daysInCurrentMonth >= 31 ? "31" : "30";
+    }
     default:
       return undefined;
   }
@@ -121,6 +143,48 @@ export function buildIdnesUrl(config: IdnesScraperConfig): string {
     }
     if (config.ownership) {
       params.set("s-qc[ownership]", config.ownership);
+    }
+    const articleAge = toIdnesArticleAge(config.freshness);
+    if (articleAge) {
+      params.set("s-qc[articleAge]", articleAge);
+    }
+
+    const query = params.toString();
+    return query ? `${pathname}/?${query}` : `${pathname}/`;
+  }
+
+  if (config.propertyKind === "house") {
+    const baseUrl = "https://reality.idnes.cz/s/prodej/domy";
+    const priceRange =
+      typeof config.priceMin === "number" && typeof config.priceMax === "number"
+        ? `cena-nad-${config.priceMin}-do-${config.priceMax}`
+        : typeof config.priceMax === "number"
+          ? `cena-do-${config.priceMax}`
+          : typeof config.priceMin === "number"
+            ? `cena-nad-${config.priceMin}`
+            : "";
+
+    const pathname = [baseUrl, priceRange, config.city].filter(Boolean).join("/");
+    const params = new URLSearchParams();
+
+    if (config.houseSubtype) {
+      params.set("s-qc[subtypeHouse]", config.houseSubtype);
+    }
+    if (typeof config.roomCount === "number") {
+      params.set("s-qc[roomCount]", config.roomCount.toString());
+      params.set("s-rd", config.roomCount.toString());
+    }
+    if (typeof config.areaMin === "number") {
+      params.set("s-qc[usableAreaMin]", config.areaMin.toString());
+    }
+    if (config.ownership) {
+      params.set("s-qc[ownership]", config.ownership);
+    }
+    if (config.condition) {
+      params.set("s-qc[condition]", config.condition);
+    }
+    if (config.material) {
+      params.set("s-qc[material]", config.material);
     }
     const articleAge = toIdnesArticleAge(config.freshness);
     if (articleAge) {
@@ -248,7 +312,7 @@ export interface BazosScraperConfig {
   /**
    * Property kind mapped by the builder to the site-specific slug.
    */
-  propertyKind: "apartment" | "land";
+  propertyKind: "apartment" | "land" | "house";
 
   /**
    * Whether to only include listings from today/yesterday (last ~24h)
@@ -258,8 +322,12 @@ export interface BazosScraperConfig {
 }
 
 export function buildBazosUrl(config: BazosScraperConfig): string {
-  const propertyType = config.propertyKind === "land" ? "pozemek" : "byt";
-  const baseUrl = `https://reality.bazos.cz/${config.offerType}/${propertyType}/`;
+  const baseUrl =
+    config.propertyKind === "land"
+      ? `https://reality.bazos.cz/${config.offerType}/pozemek/`
+      : config.propertyKind === "house"
+        ? "https://reality.bazos.cz/dum/"
+        : `https://reality.bazos.cz/${config.offerType}/byt/`;
 
   const params = new URLSearchParams();
   params.set("hledat", "");

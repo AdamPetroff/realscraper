@@ -37,7 +37,7 @@ export interface ScrapeLocationConfig {
 }
 
 export type SharedOfferType = "sale" | "rent";
-export type SharedPropertyKind = "apartment" | "land";
+export type SharedPropertyKind = "apartment" | "land" | "house";
 export type SharedFreshness = "today" | "week" | "month";
 export type SharedOwnership = "personal";
 
@@ -52,6 +52,7 @@ export interface SharedScrapeSearchConfig {
   pricePerSqmMin?: number;
   pricePerSqmMax?: number;
   roomLayouts?: string[];
+  roomCountMin?: number;
   ownership?: SharedOwnership;
   onlyNew?: boolean;
   freshness?: SharedFreshness;
@@ -117,6 +118,14 @@ const IDNES_ALL_MATERIALS = [
   "prefab",
   "mixed",
 ];
+const IDNES_ALL_HOUSE_CONDITIONS = [
+  "new",
+  "project",
+  "under-construction",
+  "good-condition",
+  "maintained",
+  "after-reconstruction",
+];
 
 const LOCATIONS = {
   brno: {
@@ -167,6 +176,20 @@ const LOCATIONS = {
   },
   olomoucLand: {
     label: "Olomouc ≤10 km",
+    idnesCity: "olomouc",
+    srealityLocationSlug: "olomoucky-kraj",
+    bezrealitky: {
+      osmValue: "Olomouc, Olomoucký kraj, Střední Morava, Česko",
+      regionOsmIds: "R441579",
+    },
+    bazos: {
+      locationCode: "77900",
+      radiusKm: 10,
+    },
+  },
+  olomoucHouse: {
+    label: "Olomouc ≤10 km",
+    idnesCity: "olomoucky-kraj",
     srealityLocationSlug: "olomoucky-kraj",
     bezrealitky: {
       osmValue: "Olomouc, Olomoucký kraj, Střední Morava, Česko",
@@ -281,6 +304,36 @@ export const SHARED_SCRAPES: SharedScrapeConfig[] = [
           vzdalenost: 10,
           "za-m2": 1,
         },
+      },
+    },
+  },
+  {
+    label: "House (5-10M CZK) Olomouc <=10 km",
+    search: {
+      offerType: "sale",
+      propertyKind: "house",
+      location: LOCATIONS.olomoucHouse,
+      priceMin: 5_000_000,
+      priceMax: 10_000_000,
+      ownership: "personal",
+      onlyNew: false,
+      freshness: "month",
+    },
+    overrides: {
+      idnes: {
+        propertyKind: "house",
+        houseSubtype: "house|turn-key",
+        roomCount: 3,
+        areaMin: 36,
+        condition: IDNES_ALL_HOUSE_CONDITIONS.join("|"),
+        material: IDNES_ALL_MATERIALS.join("|"),
+      },
+      bezrealitky: {
+        priceFrom: 5_000_000,
+        priceTo: 10_000_000,
+      },
+      sreality: {
+        areaMin: 50,
       },
     },
   },
@@ -420,6 +473,25 @@ function createIdnesConfig(scrape: SharedScrapeConfig): IdnesScrapeConfig {
       ...base,
       ...scrape.overrides?.idnes,
     } as IdnesScraperConfig;
+  } else if (search.propertyKind === "house") {
+    const base: IdnesScraperConfig = {
+      propertyKind: "house",
+      city: search.location.idnesCity ?? "olomoucky-kraj",
+      priceMin:
+        typeof search.priceMin === "number" && search.priceMin > 0
+          ? search.priceMin
+          : undefined,
+      priceMax: search.priceMax,
+      roomCount: search.roomCountMin,
+      areaMin: search.areaMin,
+      ownership: search.ownership === "personal" ? "personal" : undefined,
+      freshness: search.freshness,
+    };
+
+    config = {
+      ...base,
+      ...scrape.overrides?.idnes,
+    } as IdnesScraperConfig;
   } else {
     const rooms = toIdnesRooms(search.roomLayouts);
 
@@ -490,6 +562,18 @@ function createBezrealitkyConfig(
           landType: "STAVEBNI",
           newOnly: search.onlyNew,
         }
+      : search.propertyKind === "house"
+        ? {
+            estateType: "DUM",
+            offerType: toBezrealitkyOfferType(search.offerType),
+            location: location.location ?? "exact",
+            osmValue: location.osmValue,
+            regionOsmIds: location.regionOsmIds,
+            priceFrom: search.priceMin ?? 0,
+            priceTo: search.priceMax ?? 0,
+            currency: "CZK",
+            newOnly: search.onlyNew,
+          }
       : {
           dispositions: toBezrealitkyDispositions(search.roomLayouts),
           estateType: "BYT",
@@ -544,6 +628,18 @@ function createSrealityConfig(
               : {}),
           },
         }
+      : search.propertyKind === "house"
+        ? {
+            offerType: toSrealityOfferType(search.offerType),
+            category: "domy",
+            locationSlug,
+            age: toSrealityAge(search.freshness),
+            priceMin: search.priceMin,
+            priceMax: search.priceMax,
+            areaMin: search.areaMin,
+            areaMax: search.areaMax,
+            newOnly: search.onlyNew,
+          }
       : {
           offerType: toSrealityOfferType(search.offerType),
           category: "byty",
