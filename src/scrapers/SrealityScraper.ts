@@ -319,9 +319,12 @@ export class SrealityScraper {
     if (!estate.id) return "";
 
     const locality = estate.locality || {};
-    const categoryType = estate.categoryTypeCb?.name?.toLowerCase() || "prodej";
-    let categoryMainRaw = estate.categoryMainCb?.name?.toLowerCase() || "byt";
-    const categoryMain = categoryMainRaw === "byty" ? "byt" : categoryMainRaw;
+    const categoryType = this.normalizeUrlSegment(
+      estate.categoryTypeCb?.name || "prodej"
+    );
+    const categoryMain = this.normalizeCategoryMain(
+      estate.categoryMainCb?.name || "byt"
+    );
 
     // Build location part of URL
     let locationSlug = "";
@@ -332,12 +335,38 @@ export class SrealityScraper {
       }
     }
 
-    // Map category sub to URL format (e.g., "2+kk" stays as is)
-    const categorySubName = estate.categorySubCb?.name || "";
-    const categorySubSlug = categorySubName.toLowerCase();
+    const categorySubSlug = this.normalizeUrlSegment(
+      estate.categorySubCb?.name || ""
+    );
 
     // Format: /detail/prodej/byt/2-kk/brno-kralovo-pole/1889518412
     return `https://www.sreality.cz/detail/${categoryType}/${categoryMain}/${categorySubSlug}/${locationSlug}/${estate.id}`;
+  }
+
+  private normalizeCategoryMain(categoryMain: string): string {
+    const normalized = this.normalizeUrlSegment(categoryMain);
+
+    switch (normalized) {
+      case "byty":
+        return "byt";
+      case "domy":
+        return "dum";
+      case "pozemky":
+        return "pozemek";
+      default:
+        return normalized || "byt";
+    }
+  }
+
+  private normalizeUrlSegment(value: string): string {
+    return value
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      .replace(/\s+/g, "-")
+      .replace(/[^a-z0-9+-]+/g, "-")
+      .replace(/-+/g, "-")
+      .replace(/^-|-$/g, "");
   }
 
   private resolvePropertyType(estate: SrealityEstate): PropertyType | undefined {

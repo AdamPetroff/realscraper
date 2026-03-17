@@ -31,6 +31,29 @@ describe("SrealityScraper land support", () => {
       sourceId: "123",
     });
     expect(property.price).toMatch(/1\s*536\s*000 Kč/u);
-    expect(property.url).toContain("/detail/prodej/pozemky/stavební parcela/");
+    expect(property.url).toContain("/detail/prodej/pozemek/stavebni-parcela/");
+  });
+
+  it("builds canonical house detail URLs with ASCII singular slugs", () => {
+    const scraper = new SrealityScraper();
+
+    const property = (scraper as any).transformEstate({
+      id: 4011086668,
+      name: "Prodej rodinného domu",
+      locality: {
+        city: "Džbél",
+        citySeoName: "dzbel",
+        cityPart: "Džbél",
+        cityPartSeoName: "dzbel-",
+      },
+      priceCzk: 4_500_000,
+      categoryTypeCb: { name: "prodej" },
+      categoryMainCb: { name: "domy" },
+      categorySubCb: { name: "Rodinný" },
+    });
+
+    expect(property?.url).toBe(
+      "https://www.sreality.cz/detail/prodej/dum/rodinny/dzbel-dzbel-/4011086668"
+    );
   });
 });
