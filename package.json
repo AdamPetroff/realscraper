@@ -19,6 +19,8 @@
 		"manual-scrape-bezrealitky": "ts-node --transpile-only scripts/manual-scrape-bezrealitky.ts",
 		"manual-scrape-sreality": "ts-node --transpile-only scripts/manual-scrape-sreality.ts",
 		"manual-scrape-bazos": "ts-node --transpile-only scripts/manual-scrape-bazos.ts",
+		"manual-scrape-okdrazby": "ts-node --transpile-only scripts/manual-scrape-okdrazby.ts",
+		"manual-scrape-exdrazby": "ts-node --transpile-only scripts/manual-scrape-exdrazby.ts",
 		"normalize-property-areas": "ts-node --transpile-only scripts/normalize-property-areas.ts",
 		"backfill-price-per-sqm": "ts-node --transpile-only scripts/backfill-price-per-sqm.ts",
 		"backfill-idnes-area-from-title": "ts-node --transpile-only scripts/backfill-idnes-area-from-title.ts",

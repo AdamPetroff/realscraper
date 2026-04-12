@@ -1,0 +1,1390 @@
+{
+  "portalParameters": {
+    "categories": [
+      {
+        "id": 1,
+        "categoryCode": "movable",
+        "category": "Movitý",
+        "urlSlug": "movity",
+        "level": 1,
+        "parentCategoryId": null
+      },
+      {
+        "id": 2,
+        "categoryCode": "immovable",
+        "category": "Nemovitý",
+        "urlSlug": "nemovity",
+        "level": 1,
+        "parentCategoryId": null
+      },
+      {
+        "id": 3,
+        "categoryCode": "immaterial",
+        "category": "Nehmotný",
+        "urlSlug": "nehmotny",
+        "level": 1,
+        "parentCategoryId": null
+      },
+      {
+        "id": 4,
+        "categoryCode": "cars",
+        "category": "Automobily",
+        "urlSlug": "automobily",
+        "level": 2,
+        "parentCategoryId": 1
+      },
+      {
+        "id": 5,
+        "categoryCode": "electronics",
+        "category": "Elektronika",
+        "urlSlug": "elektronika",
+        "level": 2,
+        "parentCategoryId": 1
+      },
+      {
+        "id": 6,
+        "categoryCode": "furniture",
+        "category": "Nábytek",
+        "urlSlug": "nabytek",
+        "level": 2,
+        "parentCategoryId": 1
+      },
+      {
+        "id": 7,
+        "categoryCode": "art",
+        "category": "Umění",
+        "urlSlug": "umeni",
+        "level": 2,
+        "parentCategoryId": 1
+      },
+      {
+        "id": 8,
+        "categoryCode": "machinery_equipment",
+        "category": "Stroje a Zařízení",
+        "urlSlug": "stroje-a-zarizeni",
+        "level": 2,
+        "parentCategoryId": 1
+      },
+      {
+        "id": 9,
+        "categoryCode": "houses",
+        "category": "Domy",
+        "urlSlug": "domy",
+        "level": 2,
+        "parentCategoryId": 2
+      },
+      {
+        "id": 11,
+        "categoryCode": "apartments",
+        "category": "Byty",
+        "urlSlug": "byty",
+        "level": 2,
+        "parentCategoryId": 2
+      },
+      {
+        "id": 13,
+        "categoryCode": "other_real_estate",
+        "category": "Ostatní nemovitosti",
+        "urlSlug": "ostatni-nemovitosti",
+        "level": 2,
+        "parentCategoryId": 2
+      },
+      {
+        "id": 14,
+        "categoryCode": "companies_holdings",
+        "category": "Společnosti a podíly",
+        "urlSlug": "spolecnosti-a-podily",
+        "level": 2,
+        "parentCategoryId": 3
+      },
+      {
+        "id": 15,
+        "categoryCode": "claims",
+        "category": "Pohledávky",
+        "urlSlug": "pohledavky",
+        "level": 2,
+        "parentCategoryId": 3
+      },
+      {
+        "id": 16,
+        "categoryCode": "other_immaterials",
+        "category": "Ostatní",
+        "urlSlug": "ostatni",
+        "level": 2,
+        "parentCategoryId": 3
+      },
+      {
+        "id": 17,
+        "categoryCode": "buses",
+        "category": "Autobusy",
+        "urlSlug": "autobusy",
+        "level": 3,
+        "parentCategoryId": 4
+      },
+      {
+        "id": 18,
+        "categoryCode": "motorcycles",
+        "category": "Motocykly",
+        "urlSlug": "motocykly",
+        "level": 3,
+        "parentCategoryId": 4
+      },
+      {
+        "id": 19,
+        "categoryCode": "trucks",
+        "category": "Nákladní auta",
+        "urlSlug": "nakladni-auta",
+        "level": 3,
+        "parentCategoryId": 4
+      },
+      {
+        "id": 20,
+        "categoryCode": "passenger_cars",
+        "category": "Osobní",
+        "urlSlug": "osobni",
+        "level": 3,
+        "parentCategoryId": 4
+      },
+      {
+        "id": 21,
+        "categoryCode": "other_cars",
+        "category": "Ostatní",
+        "urlSlug": "ostatni",
+        "level": 3,
+        "parentCategoryId": 4
+      },
+      {
+        "id": 22,
+        "categoryCode": "computers",
+        "category": "Počítače",
+        "urlSlug": "pocitace",
+        "level": 3,
+        "parentCategoryId": 5
+      },
+      {
+        "id": 23,
+        "categoryCode": "phones",
+        "category": "Telefony",
+        "urlSlug": "telefony",
+        "level": 3,
+        "parentCategoryId": 5
+      },
+      {
+        "id": 24,
+        "categoryCode": "tv",
+        "category": "TV",
+        "urlSlug": "tv",
+        "level": 3,
+        "parentCategoryId": 5
+      },
+      {
+        "id": 25,
+        "categoryCode": "other_electronics",
+        "category": "Ostatní",
+        "urlSlug": "ostatni",
+        "level": 3,
+        "parentCategoryId": 5
+      },
+      {
+        "id": 26,
+        "categoryCode": "interior",
+        "category": "Interiérový",
+        "urlSlug": "interierovy",
+        "level": 3,
+        "parentCategoryId": 6
+      },
+      {
+        "id": 27,
+        "categoryCode": "exterior",
+        "category": "Zahradní",
+        "urlSlug": "zahradni",
+        "level": 3,
+        "parentCategoryId": 6
+      },
+      {
+        "id": 28,
+        "categoryCode": "other_furniture",
+        "category": "Ostatní",
+        "urlSlug": "ostatni",
+        "level": 3,
+        "parentCategoryId": 6
+      },
+      {
+        "id": 29,
+        "categoryCode": "paintings",
+        "category": "Obrazy",
+        "urlSlug": "obrazy",
+        "level": 3,
+        "parentCategoryId": 7
+      },
+      {
+        "id": 30,
+        "categoryCode": "antiquities",
+        "category": "Starožitnosti",
+        "urlSlug": "starozitnosti",
+        "level": 3,
+        "parentCategoryId": 7
+      },
+      {
+        "id": 31,
+        "categoryCode": "other_art",
+        "category": "Ostatní",
+        "urlSlug": "ostatni",
+        "level": 3,
+        "parentCategoryId": 7
+      },
+      {
+        "id": 32,
+        "categoryCode": "other_machinery_equipment",
+        "category": "Ostatní",
+        "urlSlug": "ostatni",
+        "level": 3,
+        "parentCategoryId": 8
+      },
+      {
+        "id": 33,
+        "categoryCode": "public_limited_company",
+        "category": "A.S.",
+        "urlSlug": "a-s-",
+        "level": 3,
+        "parentCategoryId": 14
+      },
+      {
+        "id": 35,
+        "categoryCode": "other_companies",
+        "category": "Ostatní",
+        "urlSlug": "ostatni",
+        "level": 3,
+        "parentCategoryId": 14
+      },
+      {
+        "id": 36,
+        "categoryCode": "private_limited_company",
+        "category": "S.R.O",
+        "urlSlug": "s-r-o",
+        "level": 3,
+        "parentCategoryId": 14
+      },
+      {
+        "id": 37,
+        "categoryCode": "foreign",
+        "category": "Zahraniční",
+        "urlSlug": "zahranicni",
+        "level": 3,
+        "parentCategoryId": 14
+      },
+      {
+        "id": 38,
+        "categoryCode": "unsecured_claims",
+        "category": "Nezajištěné pohledávky",
+        "urlSlug": "nezajistene-pohledavky",
+        "level": 3,
+        "parentCategoryId": 15
+      },
+      {
+        "id": 39,
+        "categoryCode": "secured_claims",
+        "category": "Zajištěné pohledávky",
+        "urlSlug": "zajistene-pohledavky",
+        "level": 3,
+        "parentCategoryId": 15
+      },
+      {
+        "id": 40,
+        "categoryCode": "set_of_claims",
+        "category": "Soubor pohledávek",
+        "urlSlug": "soubor-pohledavek",
+        "level": 3,
+        "parentCategoryId": 15
+      },
+      {
+        "id": 41,
+        "categoryCode": "other_immaterials_sub",
+        "category": "Ostatní",
+        "urlSlug": "ostatni",
+        "level": 3,
+        "parentCategoryId": 16
+      },
+      {
+        "id": 42,
+        "categoryCode": "chalet",
+        "category": "Chalupa",
+        "urlSlug": "chalupa",
+        "level": 3,
+        "parentCategoryId": 9
+      },
+      {
+        "id": 43,
+        "categoryCode": "cottage",
+        "category": "Chata",
+        "urlSlug": "chata",
+        "level": 3,
+        "parentCategoryId": 9
+      },
+      {
+        "id": 44,
+        "categoryCode": "turnkey_house",
+        "category": "Dům na klíč",
+        "urlSlug": "dum-na-klic",
+        "level": 3,
+        "parentCategoryId": 9
+      },
+      {
+        "id": 45,
+        "categoryCode": "monument_others",
+        "category": "Památka/Jiné",
+        "urlSlug": "pamatka-jine",
+        "level": 3,
+        "parentCategoryId": 9
+      },
+      {
+        "id": 46,
+        "categoryCode": "family_house",
+        "category": "Rodinný dům",
+        "urlSlug": "rodinny-dum",
+        "level": 3,
+        "parentCategoryId": 9
+      },
+      {
+        "id": 48,
+        "categoryCode": "farmstead",
+        "category": "Zemědělská usedlost",
+        "urlSlug": "zemedelska-usedlost",
+        "level": 3,
+        "parentCategoryId": 9
+      },
+      {
+        "id": 49,
+        "categoryCode": "forests",
+        "category": "Lesy",
+        "urlSlug": "lesy",
+        "level": 3,
+        "parentCategoryId": 10
+      },
+      {
+        "id": 50,
+        "categoryCode": "meadows",
+        "category": "Louky",
+        "urlSlug": "louky",
+        "level": 3,
+        "parentCategoryId": 10
+      },
+      {
+        "id": 51,
+        "categoryCode": "other_lands",
+        "category": "Ostatní pozemky",
+        "urlSlug": "ostatni-pozemky",
+        "level": 3,
+        "parentCategoryId": 10
+      },
+      {
+        "id": 52,
+        "categoryCode": "fields",
+        "category": "Pole",
+        "urlSlug": "pole",
+        "level": 3,
+        "parentCategoryId": 10
+      },
+      {
+        "id": 55,
+        "categoryCode": "gardens",
+        "category": "Zahrady",
+        "urlSlug": "zahrady",
+        "level": 3,
+        "parentCategoryId": 10
+      },
+      {
+        "id": 56,
+        "categoryCode": "1_1",
+        "category": "1+1",
+        "urlSlug": "1-plus-1",
+        "level": 3,
+        "parentCategoryId": 11
+      },
+      {
+        "id": 57,
+        "categoryCode": "1_kk",
+        "category": "1+kk",
+        "urlSlug": "1-plus-kk",
+        "level": 3,
+        "parentCategoryId": 11
+      },
+      {
+        "id": 58,
+        "categoryCode": "2_1",
+        "category": "2+1",
+        "urlSlug": "2-plus-1",
+        "level": 3,
+        "parentCategoryId": 11
+      },
+      {
+        "id": 59,
+        "categoryCode": "2_kk",
+        "category": "2+kk",
+        "urlSlug": "2-plus-kk",
+        "level": 3,
+        "parentCategoryId": 11
+      },
+      {
+        "id": 60,
+        "categoryCode": "3_1",
+        "category": "3+1",
+        "urlSlug": "3-plus-1",
+        "level": 3,
+        "parentCategoryId": 11
+      },
+      {
+        "id": 61,
+        "categoryCode": "3_kk",
+        "category": "3+kk",
+        "urlSlug": "3-plus-kk",
+        "level": 3,
+        "parentCategoryId": 11
+      },
+      {
+        "id": 62,
+        "categoryCode": "4_1",
+        "category": "4+1",
+        "urlSlug": "4-plus-1",
+        "level": 3,
+        "parentCategoryId": 11
+      },
+      {
+        "id": 63,
+        "categoryCode": "4_kk",
+        "category": "4+kk",
+        "urlSlug": "4-plus-kk",
+        "level": 3,
+        "parentCategoryId": 11
+      },
+      {
+        "id": 64,
+        "categoryCode": "5_1",
+        "category": "5+1",
+        "urlSlug": "5-plus-1",
+        "level": 3,
+        "parentCategoryId": 11
+      },
+      {
+        "id": 65,
+        "categoryCode": "5_kk",
+        "category": "5+kk",
+        "urlSlug": "5-plus-kk",
+        "level": 3,
+        "parentCategoryId": 11
+      },
+      {
+        "id": 66,
+        "categoryCode": "6_more",
+        "category": "6 a více",
+        "urlSlug": "6-a-vice",
+        "level": 3,
+        "parentCategoryId": 11
+      },
+      {
+        "id": 67,
+        "categoryCode": "atypical",
+        "category": "Atypický",
+        "urlSlug": "atypicky",
+        "level": 3,
+        "parentCategoryId": 11
+      },
+      {
+        "id": 68,
+        "categoryCode": "room",
+        "category": "Pokoj",
+        "urlSlug": "pokoj",
+        "level": 3,
+        "parentCategoryId": 11
+      },
+      {
+        "id": 69,
+        "categoryCode": "tenement_house",
+        "category": "Činžovní dům",
+        "urlSlug": "cinzovni-dum",
+        "level": 3,
+        "parentCategoryId": 12
+      },
+      {
+        "id": 70,
+        "categoryCode": "offices",
+        "category": "Kanceláře",
+        "urlSlug": "kancelare",
+        "level": 3,
+        "parentCategoryId": 12
+      },
+      {
+        "id": 71,
+        "categoryCode": "commercial_spaces",
+        "category": "Obchodní prostory",
+        "urlSlug": "obchodni-prostory",
+        "level": 3,
+        "parentCategoryId": 12
+      },
+      {
+        "id": 73,
+        "categoryCode": "restaurants",
+        "category": "Restaurace",
+        "urlSlug": "restaurace",
+        "level": 3,
+        "parentCategoryId": 12
+      },
+      {
+        "id": 74,
+        "categoryCode": "warehouses",
+        "category": "Sklady",
+        "urlSlug": "sklady",
+        "level": 3,
+        "parentCategoryId": 12
+      },
+      {
+        "id": 75,
+        "categoryCode": "accommodation",
+        "category": "Ubytování",
+        "urlSlug": "ubytovani",
+        "level": 3,
+        "parentCategoryId": 12
+      },
+      {
+        "id": 53,
+        "categoryCode": "lands_for_housing",
+        "category": "Pozemky k bydlení",
+        "urlSlug": "pozemky-k-bydleni",
+        "level": 3,
+        "parentCategoryId": 10
+      },
+      {
+        "id": 34,
+        "categoryCode": "interest_in_house_association",
+        "category": "Členský podíl v bytovém družstvu",
+        "urlSlug": "clensky-podil-v-bytovem-druzstvu",
+        "level": 3,
+        "parentCategoryId": 14
+      },
+      {
+        "id": 76,
+        "categoryCode": "production",
+        "category": "Výroba",
+        "urlSlug": "vyroba",
+        "level": 3,
+        "parentCategoryId": 12
+      },
+      {
+        "id": 77,
+        "categoryCode": "agricultural_object",
+        "category": "Zemědělský objekt",
+        "urlSlug": "zemedelsky-objekt",
+        "level": 3,
+        "parentCategoryId": 12
+      },
+      {
+        "id": 78,
+        "categoryCode": "garage",
+        "category": "Garáž",
+        "urlSlug": "garaz",
+        "level": 3,
+        "parentCategoryId": 13
+      },
+      {
+        "id": 79,
+        "categoryCode": "parking_place",
+        "category": "Garážové stání",
+        "urlSlug": "garazove-stani",
+        "level": 3,
+        "parentCategoryId": 13
+      },
+      {
+        "id": 80,
+        "categoryCode": "other_real_estate_sub",
+        "category": "Ostatní",
+        "urlSlug": "ostatni",
+        "level": 3,
+        "parentCategoryId": 13
+      },
+      {
+        "id": 81,
+        "categoryCode": "attic",
+        "category": "Půdní prostor",
+        "urlSlug": "pudni-prostor",
+        "level": 3,
+        "parentCategoryId": 13
+      },
+      {
+        "id": 82,
+        "categoryCode": "wine_cellar",
+        "category": "Vinný sklep",
+        "urlSlug": "vinny-sklep",
+        "level": 3,
+        "parentCategoryId": 13
+      },
+      {
+        "id": 10,
+        "categoryCode": "land",
+        "category": "Pozemky",
+        "urlSlug": "pozemky",
+        "level": 2,
+        "parentCategoryId": 2
+      },
+      {
+        "id": 12,
+        "categoryCode": "commercial_real_estate",
+        "category": "Komerční nemovitosti",
+        "urlSlug": "komercni-nemovitosti",
+        "level": 2,
+        "parentCategoryId": 2
+      },
+      {
+        "id": 72,
+        "categoryCode": "other_commercial_real_estate",
+        "category": "Ostatní komerční nemovitosti",
+        "urlSlug": "ostatni-komercni-nemovitosti",
+        "level": 3,
+        "parentCategoryId": 12
+      },
+      {
+        "id": 47,
+        "categoryCode": "villa",
+        "category": "Vila",
+        "urlSlug": "vila",
+        "level": 3,
+        "parentCategoryId": 9
+      },
+      {
+        "id": 83,
+        "categoryCode": "other_movables",
+        "category": "Ostatní movitosti",
+        "urlSlug": "ostatni-movitosti",
+        "level": 2,
+        "parentCategoryId": 1
+      },
+      {
+        "id": 84,
+        "categoryCode": "other_movables_sub",
+        "category": "Ostatní",
+        "urlSlug": "ostatni",
+        "level": 3,
+        "parentCategoryId": 83
+      },
+      {
+        "id": 85,
+        "categoryCode": "commercial_lots",
+        "category": "Komerční pozemky",
+        "urlSlug": "komercni-pozemky",
+        "level": 3,
+        "parentCategoryId": 10
+      },
+      {
+        "id": 86,
+        "categoryCode": "ponds",
+        "category": "Rybníky",
+        "urlSlug": "rybniky",
+        "level": 3,
+        "parentCategoryId": 10
+      }
+    ],
+    "statuses": [
+      {
+        "code": "unpublished",
+        "text": "Nezveřejněná"
+      },
+      {
+        "code": "prepared",
+        "text": "Připravovaná"
+      },
+      {
+        "code": "ongoing",
+        "text": "Probíhající"
+      },
+      {
+        "code": "priorityBidding",
+        "text": "Prioritní podání"
+      },
+      {
+        "code": "objectionsSubmission",
+        "text": "Podávaní námitek"
+      },
+      {
+        "code": "objectionsResolution",
+        "text": "Vyřizování námitek"
+      },
+      {
+        "code": "auctioned",
+        "text": "Vydražena"
+      },
+      {
+        "code": "noSubmission",
+        "text": "Nebylo podání"
+      },
+      {
+        "code": "postponed",
+        "text": "Odročená"
+      },
+      {
+        "code": "postponedDueToInsolvency",
+        "text": "Odročená z důvodů insolvence"
+      },
+      {
+        "code": "postponedIndefinitely",
+        "text": "Odročená na neurčito"
+      },
+      {
+        "code": "abandoned",
+        "text": "Upuštěná"
+      },
+      {
+        "code": "cancelled",
+        "text": "Zrušená"
+      },
+      {
+        "code": "cancelledDueToInsolvency",
+        "text": "Zrušená z důvodů insolvence"
+      },
+      {
+        "code": "paid",
+        "text": "Uhrazená"
+      }
+    ],
+    "regions": [
+      {
+        "id": 1,
+        "name": "Hlavní město Praha",
+        "parentLocationId": null,
+        "parentLocationName": null,
+        "urlSlug": "hlavni-mesto-praha"
+      },
+      {
+        "id": 2,
+        "name": "Středočeský kraj",
+        "parentLocationId": null,
+        "parentLocationName": null,
+        "urlSlug": "stredocesky-kraj"
+      },
+      {
+        "id": 3,
+        "name": "Jihočeský kraj",
+        "parentLocationId": null,
+        "parentLocationName": null,
+        "urlSlug": "jihocesky-kraj"
+      },
+      {
+        "id": 4,
+        "name": "Plzeňský kraj",
+        "parentLocationId": null,
+        "parentLocationName": null,
+        "urlSlug": "plzensky-kraj"
+      },
+      {
+        "id": 5,
+        "name": "Karlovarský kraj",
+        "parentLocationId": null,
+        "parentLocationName": null,
+        "urlSlug": "karlovarsky-kraj"
+      },
+      {
+        "id": 6,
+        "name": "Ústecký kraj",
+        "parentLocationId": null,
+        "parentLocationName": null,
+        "urlSlug": "ustecky-kraj"
+      },
+      {
+        "id": 7,
+        "name": "Liberecký kraj",
+        "parentLocationId": null,
+        "parentLocationName": null,
+        "urlSlug": "liberecky-kraj"
+      },
+      {
+        "id": 8,
+        "name": "Královéhradecký kraj",
+        "parentLocationId": null,
+        "parentLocationName": null,
+        "urlSlug": "kralovehradecky-kraj"
+      },
+      {
+        "id": 9,
+        "name": "Pardubický kraj",
+        "parentLocationId": null,
+        "parentLocationName": null,
+        "urlSlug": "pardubicky-kraj"
+      },
+      {
+        "id": 10,
+        "name": "Kraj Vysočina",
+        "parentLocationId": null,
+        "parentLocationName": null,
+        "urlSlug": "kraj-vysocina"
+      },
+      {
+        "id": 11,
+        "name": "Jihomoravský kraj",
+        "parentLocationId": null,
+        "parentLocationName": null,
+        "urlSlug": "jihomoravsky-kraj"
+      },
+      {
+        "id": 12,
+        "name": "Olomoucký kraj",
+        "parentLocationId": null,
+        "parentLocationName": null,
+        "urlSlug": "olomoucky-kraj"
+      },
+      {
+        "id": 13,
+        "name": "Moravskoslezský kraj",
+        "parentLocationId": null,
+        "parentLocationName": null,
+        "urlSlug": "moravskoslezsky-kraj"
+      },
+      {
+        "id": 14,
+        "name": "Zlínský kraj",
+        "parentLocationId": null,
+        "parentLocationName": null,
+        "urlSlug": "zlinsky-kraj"
+      }
+    ],
+    "counties": [
+      {
+        "id": 15,
+        "name": "Hlavní město Praha",
+        "parentLocationId": 1,
+        "parentLocationName": "Hlavní město Praha",
+        "urlSlug": "hlavni-mesto-praha"
+      },
+      {
+        "id": 16,
+        "name": "České Budějovice",
+        "parentLocationId": 3,
+        "parentLocationName": "Jihočeský kraj",
+        "urlSlug": "ceske-budejovice"
+      },
+      {
+        "id": 17,
+        "name": "Český Krumlov",
+        "parentLocationId": 3,
+        "parentLocationName": "Jihočeský kraj",
+        "urlSlug": "cesky-krumlov"
+      },
+      {
+        "id": 18,
+        "name": "Jindřichův Hradec",
+        "parentLocationId": 3,
+        "parentLocationName": "Jihočeský kraj",
+        "urlSlug": "jindrichuv-hradec"
+      },
+      {
+        "id": 19,
+        "name": "Písek",
+        "parentLocationId": 3,
+        "parentLocationName": "Jihočeský kraj",
+        "urlSlug": "pisek"
+      },
+      {
+        "id": 20,
+        "name": "Prachatice",
+        "parentLocationId": 3,
+        "parentLocationName": "Jihočeský kraj",
+        "urlSlug": "prachatice"
+      },
+      {
+        "id": 21,
+        "name": "Strakonice",
+        "parentLocationId": 3,
+        "parentLocationName": "Jihočeský kraj",
+        "urlSlug": "strakonice"
+      },
+      {
+        "id": 22,
+        "name": "Tábor",
+        "parentLocationId": 3,
+        "parentLocationName": "Jihočeský kraj",
+        "urlSlug": "tabor"
+      },
+      {
+        "id": 23,
+        "name": "Blansko",
+        "parentLocationId": 11,
+        "parentLocationName": "Jihomoravský kraj",
+        "urlSlug": "blansko"
+      },
+      {
+        "id": 24,
+        "name": "Brno-město",
+        "parentLocationId": 11,
+        "parentLocationName": "Jihomoravský kraj",
+        "urlSlug": "brno-mesto"
+      },
+      {
+        "id": 25,
+        "name": "Brno-venkov",
+        "parentLocationId": 11,
+        "parentLocationName": "Jihomoravský kraj",
+        "urlSlug": "brno-venkov"
+      },
+      {
+        "id": 26,
+        "name": "Břeclav",
+        "parentLocationId": 11,
+        "parentLocationName": "Jihomoravský kraj",
+        "urlSlug": "breclav"
+      },
+      {
+        "id": 27,
+        "name": "Hodonín",
+        "parentLocationId": 11,
+        "parentLocationName": "Jihomoravský kraj",
+        "urlSlug": "hodonin"
+      },
+      {
+        "id": 28,
+        "name": "Vyškov",
+        "parentLocationId": 11,
+        "parentLocationName": "Jihomoravský kraj",
+        "urlSlug": "vyskov"
+      },
+      {
+        "id": 29,
+        "name": "Znojmo",
+        "parentLocationId": 11,
+        "parentLocationName": "Jihomoravský kraj",
+        "urlSlug": "znojmo"
+      },
+      {
+        "id": 30,
+        "name": "Cheb",
+        "parentLocationId": 5,
+        "parentLocationName": "Karlovarský kraj",
+        "urlSlug": "cheb"
+      },
+      {
+        "id": 31,
+        "name": "Karlovy Vary",
+        "parentLocationId": 5,
+        "parentLocationName": "Karlovarský kraj",
+        "urlSlug": "karlovy-vary"
+      },
+      {
+        "id": 32,
+        "name": "Sokolov",
+        "parentLocationId": 5,
+        "parentLocationName": "Karlovarský kraj",
+        "urlSlug": "sokolov"
+      },
+      {
+        "id": 33,
+        "name": "Havlíčkův Brod",
+        "parentLocationId": 10,
+        "parentLocationName": "Kraj Vysočina",
+        "urlSlug": "havlickuv-brod"
+      },
+      {
+        "id": 34,
+        "name": "Jihlava",
+        "parentLocationId": 10,
+        "parentLocationName": "Kraj Vysočina",
+        "urlSlug": "jihlava"
+      },
+      {
+        "id": 35,
+        "name": "Pelhřimov",
+        "parentLocationId": 10,
+        "parentLocationName": "Kraj Vysočina",
+        "urlSlug": "pelhrimov"
+      },
+      {
+        "id": 36,
+        "name": "Třebíč",
+        "parentLocationId": 10,
+        "parentLocationName": "Kraj Vysočina",
+        "urlSlug": "trebic"
+      },
+      {
+        "id": 37,
+        "name": "Žďár nad Sázavou",
+        "parentLocationId": 10,
+        "parentLocationName": "Kraj Vysočina",
+        "urlSlug": "zdar-nad-sazavou"
+      },
+      {
+        "id": 38,
+        "name": "Hradec Králové",
+        "parentLocationId": 8,
+        "parentLocationName": "Královéhradecký kraj",
+        "urlSlug": "hradec-kralove"
+      },
+      {
+        "id": 39,
+        "name": "Jičín",
+        "parentLocationId": 8,
+        "parentLocationName": "Královéhradecký kraj",
+        "urlSlug": "jicin"
+      },
+      {
+        "id": 40,
+        "name": "Náchod",
+        "parentLocationId": 8,
+        "parentLocationName": "Královéhradecký kraj",
+        "urlSlug": "nachod"
+      },
+      {
+        "id": 41,
+        "name": "Rychnov nad Kněžnou",
+        "parentLocationId": 8,
+        "parentLocationName": "Královéhradecký kraj",
+        "urlSlug": "rychnov-nad-kneznou"
+      },
+      {
+        "id": 42,
+        "name": "Trutnov",
+        "parentLocationId": 8,
+        "parentLocationName": "Královéhradecký kraj",
+        "urlSlug": "trutnov"
+      },
+      {
+        "id": 43,
+        "name": "Česká Lípa",
+        "parentLocationId": 7,
+        "parentLocationName": "Liberecký kraj",
+        "urlSlug": "ceska-lipa"
+      },
+      {
+        "id": 44,
+        "name": "Jablonec nad Nisou",
+        "parentLocationId": 7,
+        "parentLocationName": "Liberecký kraj",
+        "urlSlug": "jablonec-nad-nisou"
+      },
+      {
+        "id": 45,
+        "name": "Liberec",
+        "parentLocationId": 7,
+        "parentLocationName": "Liberecký kraj",
+        "urlSlug": "liberec"
+      },
+      {
+        "id": 46,
+        "name": "Semily",
+        "parentLocationId": 7,
+        "parentLocationName": "Liberecký kraj",
+        "urlSlug": "semily"
+      },
+      {
+        "id": 47,
+        "name": "Bruntál",
+        "parentLocationId": 13,
+        "parentLocationName": "Moravskoslezský kraj",
+        "urlSlug": "bruntal"
+      },
+      {
+        "id": 48,
+        "name": "Frýdek-Místek",
+        "parentLocationId": 13,
+        "parentLocationName": "Moravskoslezský kraj",
+        "urlSlug": "frydek-mistek"
+      },
+      {
+        "id": 49,
+        "name": "Karviná",
+        "parentLocationId": 13,
+        "parentLocationName": "Moravskoslezský kraj",
+        "urlSlug": "karvina"
+      },
+      {
+        "id": 50,
+        "name": "Nový Jičín",
+        "parentLocationId": 13,
+        "parentLocationName": "Moravskoslezský kraj",
+        "urlSlug": "novy-jicin"
+      },
+      {
+        "id": 51,
+        "name": "Opava",
+        "parentLocationId": 13,
+        "parentLocationName": "Moravskoslezský kraj",
+        "urlSlug": "opava"
+      },
+      {
+        "id": 52,
+        "name": "Ostrava-město",
+        "parentLocationId": 13,
+        "parentLocationName": "Moravskoslezský kraj",
+        "urlSlug": "ostrava-mesto"
+      },
+      {
+        "id": 53,
+        "name": "Jeseník",
+        "parentLocationId": 12,
+        "parentLocationName": "Olomoucký kraj",
+        "urlSlug": "jesenik"
+      },
+      {
+        "id": 54,
+        "name": "Olomouc",
+        "parentLocationId": 12,
+        "parentLocationName": "Olomoucký kraj",
+        "urlSlug": "olomouc"
+      },
+      {
+        "id": 55,
+        "name": "Prostějov",
+        "parentLocationId": 12,
+        "parentLocationName": "Olomoucký kraj",
+        "urlSlug": "prostejov"
+      },
+      {
+        "id": 56,
+        "name": "Přerov",
+        "parentLocationId": 12,
+        "parentLocationName": "Olomoucký kraj",
+        "urlSlug": "prerov"
+      },
+      {
+        "id": 57,
+        "name": "Šumperk",
+        "parentLocationId": 12,
+        "parentLocationName": "Olomoucký kraj",
+        "urlSlug": "sumperk"
+      },
+      {
+        "id": 58,
+        "name": "Chrudim",
+        "parentLocationId": 9,
+        "parentLocationName": "Pardubický kraj",
+        "urlSlug": "chrudim"
+      },
+      {
+        "id": 59,
+        "name": "Pardubice",
+        "parentLocationId": 9,
+        "parentLocationName": "Pardubický kraj",
+        "urlSlug": "pardubice"
+      },
+      {
+        "id": 60,
+        "name": "Svitavy",
+        "parentLocationId": 9,
+        "parentLocationName": "Pardubický kraj",
+        "urlSlug": "svitavy"
+      },
+      {
+        "id": 61,
+        "name": "Ústí nad Orlicí",
+        "parentLocationId": 9,
+        "parentLocationName": "Pardubický kraj",
+        "urlSlug": "usti-nad-orlici"
+      },
+      {
+        "id": 62,
+        "name": "Domažlice",
+        "parentLocationId": 4,
+        "parentLocationName": "Plzeňský kraj",
+        "urlSlug": "domazlice"
+      },
+      {
+        "id": 63,
+        "name": "Klatovy",
+        "parentLocationId": 4,
+        "parentLocationName": "Plzeňský kraj",
+        "urlSlug": "klatovy"
+      },
+      {
+        "id": 64,
+        "name": "Plzeň-jih",
+        "parentLocationId": 4,
+        "parentLocationName": "Plzeňský kraj",
+        "urlSlug": "plzen-jih"
+      },
+      {
+        "id": 65,
+        "name": "Plzeň-město",
+        "parentLocationId": 4,
+        "parentLocationName": "Plzeňský kraj",
+        "urlSlug": "plzen-mesto"
+      },
+      {
+        "id": 66,
+        "name": "Plzeň-sever",
+        "parentLocationId": 4,
+        "parentLocationName": "Plzeňský kraj",
+        "urlSlug": "plzen-sever"
+      },
+      {
+        "id": 67,
+        "name": "Rokycany",
+        "parentLocationId": 4,
+        "parentLocationName": "Plzeňský kraj",
+        "urlSlug": "rokycany"
+      },
+      {
+        "id": 68,
+        "name": "Tachov",
+        "parentLocationId": 4,
+        "parentLocationName": "Plzeňský kraj",
+        "urlSlug": "tachov"
+      },
+      {
+        "id": 69,
+        "name": "Benešov",
+        "parentLocationId": 2,
+        "parentLocationName": "Středočeský kraj",
+        "urlSlug": "benesov"
+      },
+      {
+        "id": 70,
+        "name": "Beroun",
+        "parentLocationId": 2,
+        "parentLocationName": "Středočeský kraj",
+        "urlSlug": "beroun"
+      },
+      {
+        "id": 71,
+        "name": "Kladno",
+        "parentLocationId": 2,
+        "parentLocationName": "Středočeský kraj",
+        "urlSlug": "kladno"
+      },
+      {
+        "id": 72,
+        "name": "Kolín",
+        "parentLocationId": 2,
+        "parentLocationName": "Středočeský kraj",
+        "urlSlug": "kolin"
+      },
+      {
+        "id": 73,
+        "name": "Kutná Hora",
+        "parentLocationId": 2,
+        "parentLocationName": "Středočeský kraj",
+        "urlSlug": "kutna-hora"
+      },
+      {
+        "id": 74,
+        "name": "Mělník",
+        "parentLocationId": 2,
+        "parentLocationName": "Středočeský kraj",
+        "urlSlug": "melnik"
+      },
+      {
+        "id": 75,
+        "name": "Mladá Boleslav",
+        "parentLocationId": 2,
+        "parentLocationName": "Středočeský kraj",
+        "urlSlug": "mlada-boleslav"
+      },
+      {
+        "id": 76,
+        "name": "Nymburk",
+        "parentLocationId": 2,
+        "parentLocationName": "Středočeský kraj",
+        "urlSlug": "nymburk"
+      },
+      {
+        "id": 77,
+        "name": "Praha-východ",
+        "parentLocationId": 2,
+        "parentLocationName": "Středočeský kraj",
+        "urlSlug": "praha-vychod"
+      },
+      {
+        "id": 78,
+        "name": "Praha-západ",
+        "parentLocationId": 2,
+        "parentLocationName": "Středočeský kraj",
+        "urlSlug": "praha-zapad"
+      },
+      {
+        "id": 79,
+        "name": "Příbram",
+        "parentLocationId": 2,
+        "parentLocationName": "Středočeský kraj",
+        "urlSlug": "pribram"
+      },
+      {
+        "id": 80,
+        "name": "Rakovník",
+        "parentLocationId": 2,
+        "parentLocationName": "Středočeský kraj",
+        "urlSlug": "rakovnik"
+      },
+      {
+        "id": 81,
+        "name": "Chomutov",
+        "parentLocationId": 6,
+        "parentLocationName": "Ústecký kraj",
+        "urlSlug": "chomutov"
+      },
+      {
+        "id": 82,
+        "name": "Děčín",
+        "parentLocationId": 6,
+        "parentLocationName": "Ústecký kraj",
+        "urlSlug": "decin"
+      },
+      {
+        "id": 83,
+        "name": "Litoměřice",
+        "parentLocationId": 6,
+        "parentLocationName": "Ústecký kraj",
+        "urlSlug": "litomerice"
+      },
+      {
+        "id": 84,
+        "name": "Louny",
+        "parentLocationId": 6,
+        "parentLocationName": "Ústecký kraj",
+        "urlSlug": "louny"
+      },
+      {
+        "id": 85,
+        "name": "Most",
+        "parentLocationId": 6,
+        "parentLocationName": "Ústecký kraj",
+        "urlSlug": "most"
+      },
+      {
+        "id": 86,
+        "name": "Teplice",
+        "parentLocationId": 6,
+        "parentLocationName": "Ústecký kraj",
+        "urlSlug": "teplice"
+      },
+      {
+        "id": 87,
+        "name": "Ústí nad Labem",
+        "parentLocationId": 6,
+        "parentLocationName": "Ústecký kraj",
+        "urlSlug": "usti-nad-labem"
+      },
+      {
+        "id": 88,
+        "name": "Kroměříž",
+        "parentLocationId": 14,
+        "parentLocationName": "Zlínský kraj",
+        "urlSlug": "kromeriz"
+      },
+      {
+        "id": 89,
+        "name": "Uherské Hradiště",
+        "parentLocationId": 14,
+        "parentLocationName": "Zlínský kraj",
+        "urlSlug": "uherske-hradiste"
+      },
+      {
+        "id": 90,
+        "name": "Vsetín",
+        "parentLocationId": 14,
+        "parentLocationName": "Zlínský kraj",
+        "urlSlug": "vsetin"
+      },
+      {
+        "id": 91,
+        "name": "Zlín",
+        "parentLocationId": 14,
+        "parentLocationName": "Zlínský kraj",
+        "urlSlug": "zlin"
+      }
+    ]
+  },
+  "cdnUrl": "https://d1ws838f4e5d65.cloudfront.net/api/v1/portal"
+}

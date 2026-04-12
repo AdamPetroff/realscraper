@@ -4,9 +4,13 @@ import {
   buildBezrealitkyUrl,
   buildSrealityUrl,
   buildBazosUrl,
+  buildOkDrazbyUrl,
+  buildExDrazbyUrl,
   type IdnesScraperConfig,
   type BezrealitkyScraperConfig,
   type SrealityScraperConfig,
+  type OkDrazbyScraperConfig,
+  type ExDrazbyScraperConfig,
 } from "../config";
 
 describe("config url builders", () => {
@@ -170,6 +174,68 @@ describe("config url builders", () => {
       })
     ).toBe(
       "https://reality.bazos.cz/dum/?hledat=&rubriky=reality&hlokalita=77900&humkreis=10&cenaod=4000000&cenado=10000000&Submit=Hledat&order=&crp=&kitx=ano"
+    );
+  });
+
+  it("builds an OkDrazby apartment URL with path slugs and remaining ids", () => {
+    const config: OkDrazbyScraperConfig = {
+      propertyKind: "apartment",
+      countyIds: [24],
+      regionIds: [11, 1],
+      roomLayouts: ["2+1", "2+kk", "3+1"],
+      extraCategoryIds: [9, 10],
+    };
+
+    expect(buildOkDrazbyUrl(config)).toBe(
+      "https://okdrazby.cz/drazby/nemovity/byty/2-plus-1/brno-mesto?categoryIds=9%2C10&subcategoryIds=59%2C60&locationIds=11%2C1"
+    );
+  });
+
+  it("builds an OkDrazby house URL with all house subtypes by default", () => {
+    const config: OkDrazbyScraperConfig = {
+      propertyKind: "house",
+      regionIds: [12],
+    };
+
+    expect(buildOkDrazbyUrl(config)).toBe(
+      "https://okdrazby.cz/drazby/nemovity/domy/chalupa/olomoucky-kraj?subcategoryIds=43%2C44%2C45%2C46%2C48%2C47"
+    );
+  });
+
+  it("builds an OkDrazby land URL with all land subtypes by default", () => {
+    const config: OkDrazbyScraperConfig = {
+      propertyKind: "land",
+      regionIds: [12],
+    };
+
+    expect(buildOkDrazbyUrl(config)).toBe(
+      "https://okdrazby.cz/drazby/nemovity/pozemky/lesy/olomoucky-kraj?subcategoryIds=50%2C51%2C52%2C55%2C53%2C85%2C86"
+    );
+  });
+
+  it("builds an OkDrazby land URL for a specific subtype across regions", () => {
+    const config: OkDrazbyScraperConfig = {
+      propertyKind: "land",
+      regionIds: [11, 12, 14],
+      subcategoryIds: [53],
+    };
+
+    expect(buildOkDrazbyUrl(config)).toBe(
+      "https://okdrazby.cz/drazby/nemovity/pozemky/pozemky-k-bydleni/jihomoravsky-kraj?locationIds=12%2C14"
+    );
+  });
+
+  it("builds an ExDrazby URL with repeated category and region filters", () => {
+    const config: ExDrazbyScraperConfig = {
+      status: "prepared",
+      mainCategoryId: 1,
+      subcategoryIds: [3, 4, 7],
+      regionIds: [11, 12, 13],
+      perPage: 100,
+    };
+
+    expect(buildExDrazbyUrl(config)).toBe(
+      "https://exdrazby.cz/drazby-aukce/pripravene?page=1&perPage=100&title=&priceTo=&priceFrom=&mainCategory=1&auctionType=&subCategories=3&subCategories=4&subCategories=7&regions=11&regions=12&regions=13"
     );
   });
 });

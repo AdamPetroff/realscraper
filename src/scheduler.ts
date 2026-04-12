@@ -4,6 +4,8 @@ import {
   BezrealitkyScraper,
   SrealityScraper,
   BazosScraper,
+  OkDrazbyScraper,
+  ExDrazbyScraper,
 } from "./scrapers";
 import { TelegramService } from "./telegram-service";
 import type { Property, PropertyWithPriceChange, ScrapeResult } from "./types";
@@ -27,7 +29,9 @@ type ScraperInstance =
   | IdnesScraper
   | BezrealitkyScraper
   | SrealityScraper
-  | BazosScraper;
+  | BazosScraper
+  | OkDrazbyScraper
+  | ExDrazbyScraper;
 
 export class PropertyScheduler {
   private scrapers: Map<ScraperType, ScraperInstance> = new Map();
@@ -75,6 +79,18 @@ export class PropertyScheduler {
     if (neededScrapers.has("bazos")) {
       const scraper = new BazosScraper();
       this.scrapers.set("bazos", scraper);
+      initPromises.push(scraper.initialize());
+    }
+
+    if (neededScrapers.has("okdrazby")) {
+      const scraper = new OkDrazbyScraper();
+      this.scrapers.set("okdrazby", scraper);
+      initPromises.push(scraper.initialize());
+    }
+
+    if (neededScrapers.has("exdrazby")) {
+      const scraper = new ExDrazbyScraper();
+      this.scrapers.set("exdrazby", scraper);
       initPromises.push(scraper.initialize());
     }
 
@@ -193,6 +209,18 @@ export class PropertyScheduler {
           properties = await scraper.scrapeProperties(url, {
             newOnly: config.recentOnly,
           });
+          break;
+        }
+
+        case "okdrazby": {
+          const scraper = this.scrapers.get("okdrazby") as OkDrazbyScraper;
+          properties = await scraper.scrapeProperties(url);
+          break;
+        }
+
+        case "exdrazby": {
+          const scraper = this.scrapers.get("exdrazby") as ExDrazbyScraper;
+          properties = await scraper.scrapeProperties(url);
           break;
         }
 

@@ -3,22 +3,34 @@ import {
   type BezrealitkyScraperConfig,
   type SrealityScraperConfig,
   type BazosScraperConfig,
+  type OkDrazbyScraperConfig,
+  type ExDrazbyScraperConfig,
   buildIdnesUrl,
   buildBezrealitkyUrl,
   buildSrealityUrl,
   buildBazosUrl,
+  buildOkDrazbyUrl,
+  buildExDrazbyUrl,
 } from "./config";
 
 // ============================================================================
 // Scraper Configuration Types
 // ============================================================================
 
-export type ScraperType = "idnes" | "bezrealitky" | "sreality" | "bazos";
+export type ScraperType =
+  | "idnes"
+  | "bezrealitky"
+  | "sreality"
+  | "bazos"
+  | "okdrazby"
+  | "exdrazby";
 const ALL_SCRAPERS: ScraperType[] = [
   "idnes",
   "bezrealitky",
   "sreality",
   "bazos",
+  "okdrazby",
+  "exdrazby",
 ];
 
 export interface ScrapeLocationConfig {
@@ -33,6 +45,10 @@ export interface ScrapeLocationConfig {
   bazos?: {
     locationCode: string;
     radiusKm?: number;
+  };
+  okdrazby?: {
+    regionIds: number[];
+    countyIds?: number[];
   };
 }
 
@@ -68,6 +84,7 @@ interface BaseSharedScrapeConfig {
     bezrealitky: Partial<BezrealitkyScraperConfig>;
     sreality: Partial<SrealityScraperConfig>;
     bazos: Partial<BazosScraperConfig>;
+    okdrazby: Partial<OkDrazbyScraperConfig>;
   }>;
 }
 
@@ -99,17 +116,34 @@ export interface BazosScrapeConfig extends BaseResolvedScrapeConfig {
   config: BazosScraperConfig;
 }
 
+export interface OkDrazbyScrapeConfig extends BaseResolvedScrapeConfig {
+  type: "okdrazby";
+  config: OkDrazbyScraperConfig;
+}
+
+export interface ExDrazbyScrapeConfig extends BaseResolvedScrapeConfig {
+  type: "exdrazby";
+  config: ExDrazbyScraperConfig;
+}
+
 export type ScrapeConfig =
   | IdnesScrapeConfig
   | BezrealitkyScrapeConfig
   | SrealityScrapeConfig
-  | BazosScrapeConfig;
+  | BazosScrapeConfig
+  | OkDrazbyScrapeConfig
+  | ExDrazbyScrapeConfig;
 
 // ============================================================================
 // Shared Definitions
 // ============================================================================
 
 const APARTMENT_LAYOUTS = ["2+1", "2+kk", "3+1", "3+kk"];
+const OK_DRAZBY_ALL_APARTMENT_SUBCATEGORY_IDS = [
+  56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68,
+];
+const OK_DRAZBY_ALL_HOUSE_SUBCATEGORY_IDS = [42, 43, 44, 45, 46, 48, 47];
+const OK_DRAZBY_BUILDING_LAND_SUBCATEGORY_ID = 53;
 const IDNES_ALL_MATERIALS = [
   "brick",
   "wood",
@@ -140,6 +174,10 @@ const LOCATIONS = {
       locationCode: "60200",
       radiusKm: 10,
     },
+    okdrazby: {
+      countyIds: [24],
+      regionIds: [11],
+    },
   },
   breclav: {
     label: "Břeclav",
@@ -147,6 +185,10 @@ const LOCATIONS = {
     bazos: {
       locationCode: "69002",
       radiusKm: 10,
+    },
+    okdrazby: {
+      countyIds: [26],
+      regionIds: [11],
     },
   },
   hodonin: {
@@ -156,10 +198,18 @@ const LOCATIONS = {
       locationCode: "69501",
       radiusKm: 10,
     },
+    okdrazby: {
+      countyIds: [27],
+      regionIds: [11],
+    },
   },
   breclavHodonin: {
     label: "Břeclav, Hodonín",
     srealityLocationSlug: "breclav,hodonin",
+    okdrazby: {
+      countyIds: [26, 27],
+      regionIds: [11],
+    },
   },
   olomoucApartment: {
     label: "Olomouc",
@@ -172,6 +222,10 @@ const LOCATIONS = {
     bazos: {
       locationCode: "77900",
       radiusKm: 10,
+    },
+    okdrazby: {
+      countyIds: [54],
+      regionIds: [12],
     },
   },
   olomoucLand: {
@@ -186,6 +240,9 @@ const LOCATIONS = {
       locationCode: "77900",
       radiusKm: 10,
     },
+    okdrazby: {
+      regionIds: [12],
+    },
   },
   olomoucHouse: {
     label: "Olomouc ≤10 km",
@@ -198,6 +255,15 @@ const LOCATIONS = {
     bazos: {
       locationCode: "77900",
       radiusKm: 10,
+    },
+    okdrazby: {
+      regionIds: [12],
+    },
+  },
+  southMoraviaCentralMoraviaZlin: {
+    label: "Jihomoravský, Olomoucký, Zlínský kraj",
+    okdrazby: {
+      regionIds: [11, 12, 14],
     },
   },
 } satisfies Record<string, ScrapeLocationConfig>;
@@ -337,6 +403,26 @@ export const SHARED_SCRAPES: SharedScrapeConfig[] = [
       },
     },
   },
+  {
+    label: "Building Land Jihomoravský, Olomoucký, Zlínský kraj",
+    scrapers: ["okdrazby"],
+    search: {
+      offerType: "sale",
+      propertyKind: "land",
+      location: LOCATIONS.southMoraviaCentralMoraviaZlin,
+      onlyNew: false,
+    },
+    overrides: {
+      okdrazby: {
+        extraCategoryIds: [9, 11],
+        subcategoryIds: [
+          OK_DRAZBY_BUILDING_LAND_SUBCATEGORY_ID,
+          ...OK_DRAZBY_ALL_HOUSE_SUBCATEGORY_IDS,
+          ...OK_DRAZBY_ALL_APARTMENT_SUBCATEGORY_IDS,
+        ],
+      },
+    },
+  },
 ];
 
 // ============================================================================
@@ -359,6 +445,10 @@ function titlePrefix(type: ScraperType): string {
       return "Sreality";
     case "bazos":
       return "Bazos";
+    case "okdrazby":
+      return "OkDrazby";
+    case "exdrazby":
+      return "ExDrazby";
   }
 }
 
@@ -702,6 +792,43 @@ function createBazosConfig(scrape: SharedScrapeConfig): BazosScrapeConfig {
   };
 }
 
+function createOkDrazbyConfig(
+  scrape: SharedScrapeConfig,
+): OkDrazbyScrapeConfig {
+  const { search } = scrape;
+  const location = search.location.okdrazby;
+
+  if (search.offerType !== "sale") {
+    throw new Error(`OkDrazby only supports sale searches for "${scrape.label}"`);
+  }
+
+  if (!location) {
+    throw new Error(
+      `OkDrazby mapping requires okdrazby location data for "${scrape.label}"`,
+    );
+  }
+
+  const base: OkDrazbyScraperConfig = {
+    propertyKind: search.propertyKind,
+    regionIds: location.regionIds,
+    countyIds: location.countyIds,
+    roomLayouts:
+      search.propertyKind === "apartment" ? search.roomLayouts : undefined,
+    isInOverbid: false,
+  };
+
+  return {
+    id: createScrapeId("okdrazby", scrape.label),
+    type: "okdrazby",
+    label: `${titlePrefix("okdrazby")} ${scrape.label}`,
+    enabled: scrape.enabled,
+    config: {
+      ...base,
+      ...scrape.overrides?.okdrazby,
+    },
+  };
+}
+
 function expandSharedScrape(shared: SharedScrapeConfig): ScrapeConfig[] {
   const scrapes: ScrapeConfig[] = [];
 
@@ -719,6 +846,9 @@ function expandSharedScrape(shared: SharedScrapeConfig): ScrapeConfig[] {
       case "bazos":
         scrapes.push(createBazosConfig(shared));
         break;
+      case "okdrazby":
+        scrapes.push(createOkDrazbyConfig(shared));
+        break;
     }
   }
 
@@ -726,7 +856,25 @@ function expandSharedScrape(shared: SharedScrapeConfig): ScrapeConfig[] {
 }
 
 export const SCRAPES: ScrapeConfig[] =
-  SHARED_SCRAPES.flatMap(expandSharedScrape);
+  [
+    ...SHARED_SCRAPES.flatMap(expandSharedScrape),
+    {
+      id: createScrapeId(
+        "exdrazby",
+        "Building Land, Houses, Flats Jihomoravský, Olomoucký, Zlínský kraj",
+      ),
+      type: "exdrazby",
+      label:
+        "ExDrazby Building Land, Houses, Flats Jihomoravský, Olomoucký, Zlínský kraj",
+      config: {
+        status: "prepared",
+        mainCategoryId: 1,
+        subcategoryIds: [3, 4, 7],
+        regionIds: [11, 12, 13],
+        perPage: 100,
+      },
+    },
+  ];
 
 // ============================================================================
 // Helpers
@@ -754,6 +902,10 @@ export function buildUrlForScrape(scrape: ScrapeConfig): string {
       return buildSrealityUrl(scrape.config);
     case "bazos":
       return buildBazosUrl(scrape.config);
+    case "okdrazby":
+      return buildOkDrazbyUrl(scrape.config);
+    case "exdrazby":
+      return buildExDrazbyUrl(scrape.config);
   }
 }
 

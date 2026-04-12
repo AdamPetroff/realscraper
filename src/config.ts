@@ -1,3 +1,10 @@
+import {
+  getOkDrazbyCategoryById,
+  getOkDrazbyChildCategories,
+  getOkDrazbyCountyById,
+  getOkDrazbyRegionById,
+} from "./ok-drazby-metadata";
+
 type IdnesFreshness = "today" | "week" | "month";
 
 export interface IdnesApartmentScraperConfig {
@@ -274,6 +281,211 @@ export function buildSrealityUrl(config: SrealityScraperConfig): string {
 
   const query = params.toString();
   return query ? `${baseUrl}?${query}` : baseUrl;
+}
+
+// ============================================================================
+// OkDrazby.cz Configuration
+// ============================================================================
+
+export interface OkDrazbyScraperConfig {
+  propertyKind: "apartment" | "land" | "house";
+  regionIds: number[];
+  countyIds?: number[];
+  statuses?: string[];
+  nameOrNumber?: string;
+  isInOverbid?: boolean;
+  roomLayouts?: string[];
+  subcategoryIds?: number[];
+  extraCategoryIds?: number[];
+  extraSubcategoryIds?: number[];
+}
+
+const OK_DRAZBY_ROOT_CATEGORY_ID = 2;
+const OK_DRAZBY_CATEGORY_BY_KIND: Record<
+  OkDrazbyScraperConfig["propertyKind"],
+  number
+> = {
+  apartment: 11,
+  house: 9,
+  land: 10,
+};
+
+const OK_DRAZBY_ROOM_LAYOUT_TO_SUBCATEGORY_ID: Record<string, number> = {
+  "1+1": 56,
+  "1+kk": 57,
+  "2+1": 58,
+  "2+kk": 59,
+  "3+1": 60,
+  "3+kk": 61,
+  "4+1": 62,
+  "4+kk": 63,
+  "5+1": 64,
+  "5+kk": 65,
+  "6 a více": 66,
+  atypical: 67,
+  pokoj: 68,
+};
+
+function uniqueNumbers(values: number[]): number[] {
+  return [...new Set(values.filter((value) => Number.isInteger(value)))];
+}
+
+function getOkDrazbySubcategoryIds(
+  config: OkDrazbyScraperConfig,
+  categoryId: number,
+): number[] {
+  if (config.subcategoryIds && config.subcategoryIds.length > 0) {
+    return uniqueNumbers(config.subcategoryIds);
+  }
+
+  const defaultIds =
+    config.propertyKind === "apartment"
+      ? (config.roomLayouts ?? [])
+          .map((layout) => OK_DRAZBY_ROOM_LAYOUT_TO_SUBCATEGORY_ID[layout])
+          .filter((value): value is number => typeof value === "number")
+      : getOkDrazbyChildCategories(categoryId).map((category) => category.id);
+
+  return uniqueNumbers([...(defaultIds ?? []), ...(config.extraSubcategoryIds ?? [])]);
+}
+
+function getOkDrazbyLocationPathSlug(
+  countyIds: number[],
+  regionIds: number[],
+): { slug?: string; selectedId?: number } {
+  const firstCountyId = countyIds[0];
+  if (typeof firstCountyId === "number") {
+    const county = getOkDrazbyCountyById(firstCountyId);
+    if (county) {
+      return {
+        slug: county.urlSlug,
+        selectedId: county.id,
+      };
+    }
+  }
+
+  const firstRegionId = regionIds[0];
+  if (typeof firstRegionId === "number") {
+    const region = getOkDrazbyRegionById(firstRegionId);
+    if (region) {
+      return {
+        slug: region.urlSlug,
+        selectedId: region.id,
+      };
+    }
+  }
+
+  return {};
+}
+
+export function buildOkDrazbyUrl(config: OkDrazbyScraperConfig): string {
+  const categoryId = OK_DRAZBY_CATEGORY_BY_KIND[config.propertyKind];
+  const categoryIds = uniqueNumbers([categoryId, ...(config.extraCategoryIds ?? [])]);
+  const subcategoryIds = getOkDrazbySubcategoryIds(config, categoryId);
+  const locationIds = uniqueNumbers([...(config.countyIds ?? []), ...config.regionIds]);
+
+  const propertyRoot = getOkDrazbyCategoryById(OK_DRAZBY_ROOT_CATEGORY_ID);
+  const firstCategory = getOkDrazbyCategoryById(categoryIds[0]);
+  const firstSubcategory =
+    typeof subcategoryIds[0] === "number"
+      ? getOkDrazbyCategoryById(subcategoryIds[0])
+      : undefined;
+  const { slug: locationSlug, selectedId: selectedLocationId } =
+    getOkDrazbyLocationPathSlug(config.countyIds ?? [], config.regionIds);
+
+  if (!propertyRoot || !firstCategory) {
+    throw new Error("OkDrazby metadata is missing the selected root/category");
+  }
+
+  const pathSegments = [
+    "https://okdrazby.cz/drazby",
+    propertyRoot.urlSlug,
+    firstCategory.urlSlug,
+    firstSubcategory?.urlSlug,
+    locationSlug,
+  ].filter(Boolean);
+
+  const params = new URLSearchParams();
+  const remainingCategoryIds = categoryIds.slice(1);
+  const remainingSubcategoryIds = subcategoryIds.slice(1);
+  const remainingLocationIds = locationIds.filter((id) => id !== selectedLocationId);
+
+  if (remainingCategoryIds.length > 0) {
+    params.set("categoryIds", remainingCategoryIds.join(","));
+  }
+
+  if (remainingSubcategoryIds.length > 0) {
+    params.set("subcategoryIds", remainingSubcategoryIds.join(","));
+  }
+
+  if (remainingLocationIds.length > 0) {
+    params.set("locationIds", remainingLocationIds.join(","));
+  }
+
+  const query = params.toString();
+  return query ? `${pathSegments.join("/")}?${query}` : pathSegments.join("/");
+}
+
+// ============================================================================
+// Exdrazby.cz Configuration
+// ============================================================================
+
+export interface ExDrazbyScraperConfig {
+  status: "prepared" | "ongoing" | "ended";
+  mainCategoryId?: number;
+  subcategoryIds?: number[];
+  regionIds?: number[];
+  districtIds?: number[];
+  auctionType?: string;
+  page?: number;
+  perPage?: number;
+  title?: string;
+  priceFrom?: number;
+  priceTo?: number;
+}
+
+const EX_DRAZBY_STATUS_TO_PATH: Record<ExDrazbyScraperConfig["status"], string> =
+  {
+    prepared: "pripravene",
+    ongoing: "probihajici",
+    ended: "ukoncene",
+  };
+
+export function buildExDrazbyUrl(config: ExDrazbyScraperConfig): string {
+  const baseUrl = `https://exdrazby.cz/drazby-aukce/${
+    EX_DRAZBY_STATUS_TO_PATH[config.status]
+  }`;
+  const params = new URLSearchParams();
+
+  params.set("page", String(config.page ?? 1));
+  params.set("perPage", String(config.perPage ?? 100));
+  params.set("title", config.title ?? "");
+  params.set(
+    "priceTo",
+    typeof config.priceTo === "number" ? String(config.priceTo) : "",
+  );
+  params.set(
+    "priceFrom",
+    typeof config.priceFrom === "number" ? String(config.priceFrom) : "",
+  );
+  params.set(
+    "mainCategory",
+    typeof config.mainCategoryId === "number" ? String(config.mainCategoryId) : "",
+  );
+  params.set("auctionType", config.auctionType ?? "");
+
+  for (const subcategoryId of config.subcategoryIds ?? []) {
+    params.append("subCategories", String(subcategoryId));
+  }
+
+  for (const regionId of config.regionIds ?? []) {
+    params.append("regions", String(regionId));
+  }
+
+  for (const districtId of config.districtIds ?? []) {
+    params.append("districts", String(districtId));
+  }
+
+  return `${baseUrl}?${params.toString()}`;
 }
 
 // ============================================================================

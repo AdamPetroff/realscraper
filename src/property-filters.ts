@@ -3,6 +3,7 @@ import type { Property } from "./types";
 export const BLACKLISTED_TITLE_SUBSTRINGS = [
   "ZLATÁ a VIP",
   "Správa sítí: Facebooku & Instagramu – kompletně",
+  "podíl",
 ] as const;
 
 const BLACKLISTED_TITLE_SUBSTRINGS_LOWER = BLACKLISTED_TITLE_SUBSTRINGS.map(

@@ -25,6 +25,9 @@ describe("property title blacklist", () => {
         "Správa sítí: Facebooku & Instagramu – kompletně, ihned"
       )
     ).toBe(true);
+    expect(
+      isBlacklistedPropertyTitle("Dražba podílu 1/2 na rodinném domě")
+    ).toBe(true);
   });
 
   it("should filter out blacklisted titles and keep valid listings", () => {
@@ -34,12 +37,13 @@ describe("property title blacklist", () => {
       createProperty(
         "Správa sítí: Facebooku & Instagramu – kompletně pro vas"
       ),
+      createProperty("Dražba podílu 1/4 na bytě v Brně"),
       createProperty("Byt 3+1 Brno"),
     ];
 
     const result = filterPropertiesByTitleBlacklist(properties);
 
-    expect(result.filteredOutCount).toBe(2);
+    expect(result.filteredOutCount).toBe(3);
     expect(result.filteredProperties).toHaveLength(2);
     expect(result.filteredProperties.map((property) => property.title)).toEqual(
       ["Byt 2+kk Praha", "Byt 3+1 Brno"]

@@ -1,4 +1,10 @@
-export type ScraperSource = "idnes" | "bezrealitky" | "sreality" | "bazos";
+export type ScraperSource =
+  | "idnes"
+  | "bezrealitky"
+  | "sreality"
+  | "bazos"
+  | "okdrazby"
+  | "exdrazby";
 export type PropertyType = "apartment" | "land" | "house";
 
 export interface Property {
