@@ -4,6 +4,7 @@ import {
   type BezrealitkyScraperConfig,
   buildBezrealitkyUrl,
 } from "../src/config";
+import type { ScrapeConfig } from "../src/scrape-configs";
 import { type ScrapeOptions } from "../src/scrapers/scraper.interface";
 import {
   getDefaultScrapeConfig,
@@ -13,28 +14,36 @@ import {
   type ParsedManualScrapeArgs,
 } from "./manual-scrape-utils";
 
-function getDefaultBezrealitkyConfig(): BezrealitkyScraperConfig {
+function getDefaultBezrealitkyConfig(
+  scrapes: ScrapeConfig[],
+): BezrealitkyScraperConfig {
   return {
-    ...getDefaultScrapeConfig("bezrealitky"),
+    ...getDefaultScrapeConfig(scrapes, "bezrealitky"),
     newOnly: false,
   };
 }
 
-function getBezrealitkyConfigById(id: string): BezrealitkyScraperConfig {
+function getBezrealitkyConfigById(
+  scrapes: ScrapeConfig[],
+  id: string,
+): BezrealitkyScraperConfig {
   return {
-    ...getScrapeConfigById(id, "bezrealitky"),
+    ...getScrapeConfigById(scrapes, id, "bezrealitky"),
     newOnly: false,
   };
 }
 
-function resolveTarget(args: ParsedManualScrapeArgs): {
+function resolveTarget(
+  args: ParsedManualScrapeArgs,
+  scrapes: ScrapeConfig[],
+): {
   url: string;
   options: ScrapeOptions;
 } {
   const options: ScrapeOptions = {};
 
   if (args.scrapeId) {
-    const config = getBezrealitkyConfigById(args.scrapeId);
+    const config = getBezrealitkyConfigById(scrapes, args.scrapeId);
     options.newOnly = config.newOnly;
 
     return {
@@ -59,7 +68,7 @@ function resolveTarget(args: ParsedManualScrapeArgs): {
     };
   }
 
-  const config = getDefaultBezrealitkyConfig();
+  const config = getDefaultBezrealitkyConfig(scrapes);
   options.newOnly = config.newOnly;
 
   if (

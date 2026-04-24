@@ -10,7 +10,6 @@ import {
 import { TelegramService } from "./telegram-service";
 import type { Property, PropertyWithPriceChange, ScrapeResult } from "./types";
 import {
-  SCRAPES,
   getEnabledScrapes,
   getScraperTypes,
   buildUrlForScrape,
@@ -21,6 +20,7 @@ import {
 import {
   initializeSupabase,
   isSupabaseAvailable,
+  loadScrapes,
   processProperties,
 } from "./db";
 import { filterPropertiesByTitleBlacklist } from "./property-filters";
@@ -35,6 +35,7 @@ type ScraperInstance =
 
 export class PropertyScheduler {
   private scrapers: Map<ScraperType, ScraperInstance> = new Map();
+  private scrapes: ScrapeConfig[] = [];
   private telegram: TelegramService;
   private dbAvailable: boolean = false;
 
@@ -48,11 +49,18 @@ export class PropertyScheduler {
     if (this.dbAvailable) {
       console.log("✅ Database persistence enabled");
     } else {
-      console.log("⚠️ Running without database persistence (all properties will be notified)");
+      throw new Error(
+        "Database persistence is required because scrape configs are stored in Supabase",
+      );
     }
 
-    // Determine which scrapers we need based on enabled configs
-    const enabledScrapes = getEnabledScrapes(SCRAPES);
+    this.scrapes = await loadScrapes();
+
+    const enabledScrapes = getEnabledScrapes(this.scrapes);
+    if (enabledScrapes.length === 0) {
+      throw new Error("No enabled scrape configs found in database");
+    }
+
     const neededScrapers = getScraperTypes(enabledScrapes);
 
     // Initialize only the scrapers we need
@@ -108,7 +116,7 @@ export class PropertyScheduler {
     console.log("✅ Telegram connected");
 
     // Log all active scrape URLs
-    logActiveScrapes();
+    logActiveScrapes(this.scrapes);
   }
 
   startScheduler(): void {
@@ -128,7 +136,7 @@ export class PropertyScheduler {
   }
 
   async runScrape(): Promise<void> {
-    await this.runScrapes(getEnabledScrapes(SCRAPES), "scheduled");
+    await this.runScrapes(getEnabledScrapes(this.scrapes), "scheduled");
   }
 
   private async runScrapes(

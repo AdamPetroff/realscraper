@@ -1,6 +1,5 @@
 import "dotenv/config";
 import { PropertyScheduler } from "./scheduler";
-import { IdnesScraperConfig, BezrealitkyScraperConfig } from "./config";
 
 async function main(): Promise<void> {
   // Validate environment variables

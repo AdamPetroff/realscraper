@@ -5,7 +5,7 @@ import {
   canEstimateMortgage,
   formatMonthlyMortgageEstimate,
 } from "../mortgage-estimate";
-import { logPropertySummary } from "../../scripts/manual-scrape-utils";
+import { logPropertySummary } from "../property-log";
 import { TelegramService } from "../telegram-service";
 import type { Property } from "../types";
 

@@ -1,21 +1,17 @@
-import { DEFAULT_MORTGAGE_ESTIMATE_CONFIG } from "../src/config";
-import { formatMonthlyMortgageEstimate } from "../src/mortgage-estimate";
+import { loadScrapes } from "../src/db";
+import { logPropertySummary } from "../src/property-log";
 import type { Property } from "../src/types";
-import { SCRAPES, getScrapeById, type ScrapeConfig, type ScraperType } from "../src/scrape-configs";
+import {
+  getScrapeById,
+  type ScrapeConfig,
+  type ScraperType,
+} from "../src/scrape-configs";
 
-type PropertyDetailMode = "default" | "short" | "long";
 type ScrapeConfigFor<TType extends ScraperType> = Extract<ScrapeConfig, { type: TType }> extends {
   config: infer TConfig;
 }
   ? TConfig
   : never;
-
-interface PropertyLogOptions {
-  header?: string;
-  detail?: PropertyDetailMode;
-  imageLimit?: number;
-  descriptionLimit?: number;
-}
 
 export interface ParsedManualScrapeArgs {
   rawArgs: string[];
@@ -26,7 +22,7 @@ export interface ParsedManualScrapeArgs {
 interface RunManualScrapeOptions<TScraper, TOptions> {
   sourceName: string;
   createScraper: () => TScraper;
-  resolveTarget: (args: ParsedManualScrapeArgs) => {
+  resolveTarget: (args: ParsedManualScrapeArgs, scrapes: ScrapeConfig[]) => {
     url: string;
     options?: TOptions;
     scrapeId?: string;
@@ -50,11 +46,17 @@ interface RunManualScrapeOptions<TScraper, TOptions> {
   errorLabel?: string;
 }
 
-export function parseManualScrapeArgs(rawArgs = process.argv.slice(2)): ParsedManualScrapeArgs {
+export { logPropertySummary };
+
+export function parseManualScrapeArgs(
+  scrapes: ScrapeConfig[],
+  rawArgs = process.argv.slice(2),
+): ParsedManualScrapeArgs {
   const idFlagIndex = rawArgs.indexOf("--id");
   const idFromFlag = idFlagIndex >= 0 ? rawArgs[idFlagIndex + 1] : undefined;
   const positionalArg = rawArgs.find((arg) => !arg.startsWith("--"));
-  const positionalScrape = positionalArg && getScrapeById(positionalArg) ? positionalArg : undefined;
+  const positionalScrape =
+    positionalArg && getScrapeById(scrapes, positionalArg) ? positionalArg : undefined;
   const scrapeId = idFromFlag ?? positionalScrape;
   const urlArg = positionalArg && positionalArg !== scrapeId ? positionalArg : undefined;
 
@@ -66,24 +68,26 @@ export function parseManualScrapeArgs(rawArgs = process.argv.slice(2)): ParsedMa
 }
 
 export function getDefaultScrapeConfig<TType extends ScraperType>(
+  scrapes: ScrapeConfig[],
   type: TType,
 ): ScrapeConfigFor<TType> {
-  const scrape = SCRAPES.find(
+  const scrape = scrapes.find(
     (entry): entry is Extract<ScrapeConfig, { type: TType }> => entry.type === type,
   );
 
   if (!scrape) {
-    throw new Error(`No ${type} scrape config found in SCRAPES`);
+    throw new Error(`No ${type} scrape config found in loaded scrapes`);
   }
 
   return { ...scrape.config } as ScrapeConfigFor<TType>;
 }
 
 export function getScrapeConfigById<TType extends ScraperType>(
+  scrapes: ScrapeConfig[],
   id: string,
   expectedType: TType,
 ): ScrapeConfigFor<TType> {
-  const scrape = getScrapeById(id);
+  const scrape = getScrapeById(scrapes, id);
 
   if (!scrape) {
     throw new Error(`Unknown scrape ID "${id}"`);
@@ -94,57 +98,6 @@ export function getScrapeConfigById<TType extends ScraperType>(
   }
 
   return { ...scrape.config } as ScrapeConfigFor<TType>;
-}
-
-export function logPropertySummary(
-  property: Property,
-  index: number,
-  options: PropertyLogOptions = {},
-): void {
-  const detail = options.detail ?? "default";
-  const imageLimit = options.imageLimit ?? (detail === "long" ? 5 : 1);
-  const descriptionLimit =
-    options.descriptionLimit ??
-    (detail === "short" ? 100 : detail === "default" ? 150 : undefined);
-
-  console.log(`\n=== ${options.header ?? "Property"} ${index + 1} ===`);
-  console.log(`Title: ${property.title || "N/A"}`);
-  console.log(`Price: ${property.price || "N/A"}`);
-  console.log(`Location: ${property.location || "N/A"}`);
-  console.log(`District (Okres): ${property.district || "N/A"}`);
-  console.log(`Region (Kraj): ${property.region || "N/A"}`);
-  console.log(`Area: ${property.area || "N/A"}`);
-  console.log(`Price per m²: ${formatPricePerSqm(property.pricePerSqm)}`);
-  console.log(
-    `Mortgage estimate: ${formatMortgageEstimate(property) ?? "N/A"}`
-  );
-  console.log(`Rooms: ${property.rooms || "N/A"}`);
-  console.log(`URL: ${property.url || "N/A"}`);
-
-  if (typeof property.isNew === "boolean") {
-    console.log(`Is New: ${property.isNew ? "Yes" : "No"}`);
-  }
-
-  if (property.description) {
-    console.log(`Description: ${truncate(property.description, descriptionLimit)}`);
-  }
-
-  if (property.images?.length) {
-    if (detail === "default") {
-      console.log(`Images: ${property.images.length}`);
-      console.log(`Image 1: ${property.images[0] || "N/A"}`);
-      return;
-    }
-
-    console.log(`Images (${property.images.length}):`);
-    property.images.slice(0, imageLimit).forEach((image, imageIndex) => {
-      console.log(`  ${imageIndex + 1}. ${image}`);
-    });
-
-    if (property.images.length > imageLimit) {
-      console.log(`  ...and ${property.images.length - imageLimit} more`);
-    }
-  }
 }
 
 export function logNoProperties(lines: string[]): void {
@@ -163,7 +116,8 @@ export async function runManualScrape<TScraper, TOptions = undefined>(
       await options.initialize(scraper);
     }
 
-    const target = options.resolveTarget(parseManualScrapeArgs());
+    const scrapes = await loadScrapes();
+    const target = options.resolveTarget(parseManualScrapeArgs(scrapes), scrapes);
     options.logTarget?.(target);
 
     const properties = await options.scrape(scraper, target);
@@ -189,27 +143,4 @@ export async function runManualScrape<TScraper, TOptions = undefined>(
       await options.close(scraper);
     }
   }
-}
-
-function formatPricePerSqm(pricePerSqm?: number): string {
-  if (typeof pricePerSqm !== "number") {
-    return "N/A";
-  }
-
-  return `${new Intl.NumberFormat("cs-CZ").format(pricePerSqm)} Kč/m²`;
-}
-
-function formatMortgageEstimate(property: Property): string | undefined {
-  return formatMonthlyMortgageEstimate(
-    property,
-    DEFAULT_MORTGAGE_ESTIMATE_CONFIG
-  );
-}
-
-function truncate(value: string, maxLength?: number): string {
-  if (!maxLength || value.length <= maxLength) {
-    return value;
-  }
-
-  return `${value.substring(0, maxLength)}...`;
 }

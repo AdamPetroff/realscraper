@@ -1,5 +1,6 @@
 import { BazosScraper } from "../src/scrapers/BazosScraper";
 import { buildBazosUrl, type BazosScraperConfig } from "../src/config";
+import type { ScrapeConfig } from "../src/scrape-configs";
 import {
   getDefaultScrapeConfig,
   getScrapeConfigById,
@@ -8,21 +9,27 @@ import {
   type ParsedManualScrapeArgs,
 } from "./manual-scrape-utils";
 
-function getDefaultBazosConfig(): BazosScraperConfig {
+function getDefaultBazosConfig(scrapes: ScrapeConfig[]): BazosScraperConfig {
   return {
-    ...getDefaultScrapeConfig("bazos"),
+    ...getDefaultScrapeConfig(scrapes, "bazos"),
     recentOnly: false,
   };
 }
 
-function getBazosConfigById(id: string): BazosScraperConfig {
+function getBazosConfigById(
+  scrapes: ScrapeConfig[],
+  id: string,
+): BazosScraperConfig {
   return {
-    ...getScrapeConfigById(id, "bazos"),
+    ...getScrapeConfigById(scrapes, id, "bazos"),
     recentOnly: false,
   };
 }
 
-function resolveTarget(args: ParsedManualScrapeArgs): {
+function resolveTarget(
+  args: ParsedManualScrapeArgs,
+  scrapes: ScrapeConfig[],
+): {
   url: string;
   options: { newOnly: boolean };
 } {
@@ -30,7 +37,7 @@ function resolveTarget(args: ParsedManualScrapeArgs): {
 
   if (args.scrapeId) {
     return {
-      url: buildBazosUrl(getBazosConfigById(args.scrapeId)),
+      url: buildBazosUrl(getBazosConfigById(scrapes, args.scrapeId)),
       options: { newOnly: !includeAll },
     };
   }
@@ -43,7 +50,7 @@ function resolveTarget(args: ParsedManualScrapeArgs): {
   }
 
   const config: BazosScraperConfig = {
-    ...getDefaultBazosConfig(),
+    ...getDefaultBazosConfig(scrapes),
     ...(process.env.BAZOS_LOCATION_CODE
       ? { locationCode: process.env.BAZOS_LOCATION_CODE }
       : {}),

@@ -1,5 +1,6 @@
 import { OkDrazbyScraper } from "../src/scrapers/OkDrazbyScraper";
 import { buildOkDrazbyUrl, type OkDrazbyScraperConfig } from "../src/config";
+import type { ScrapeConfig } from "../src/scrape-configs";
 import {
   getDefaultScrapeConfig,
   getScrapeConfigById,
@@ -8,22 +9,30 @@ import {
   type ParsedManualScrapeArgs,
 } from "./manual-scrape-utils";
 
-function getDefaultOkDrazbyConfig(): OkDrazbyScraperConfig {
-  return getDefaultScrapeConfig("okdrazby");
+function getDefaultOkDrazbyConfig(
+  scrapes: ScrapeConfig[],
+): OkDrazbyScraperConfig {
+  return getDefaultScrapeConfig(scrapes, "okdrazby");
 }
 
-function getOkDrazbyConfigById(id: string): OkDrazbyScraperConfig {
-  return getScrapeConfigById(id, "okdrazby");
+function getOkDrazbyConfigById(
+  scrapes: ScrapeConfig[],
+  id: string,
+): OkDrazbyScraperConfig {
+  return getScrapeConfigById(scrapes, id, "okdrazby");
 }
 
-function resolveTarget(args: ParsedManualScrapeArgs): {
+function resolveTarget(
+  args: ParsedManualScrapeArgs,
+  scrapes: ScrapeConfig[],
+): {
   url: string;
   scrapeId?: string;
 } {
   if (args.scrapeId) {
     return {
       scrapeId: args.scrapeId,
-      url: buildOkDrazbyUrl(getOkDrazbyConfigById(args.scrapeId)),
+      url: buildOkDrazbyUrl(getOkDrazbyConfigById(scrapes, args.scrapeId)),
     };
   }
 
@@ -34,7 +43,7 @@ function resolveTarget(args: ParsedManualScrapeArgs): {
   }
 
   return {
-    url: buildOkDrazbyUrl(getDefaultOkDrazbyConfig()),
+    url: buildOkDrazbyUrl(getDefaultOkDrazbyConfig(scrapes)),
   };
 }
 

@@ -14,4 +14,11 @@ export {
   processProperties,
 } from "./property-repository";
 
+export {
+  listStoredSharedScrapeConfigs,
+  loadScrapes,
+  seedScrapeConfigs,
+} from "./scrape-config-repository";
+
 export type { DbProperty } from "./property-repository";
+export type { DbScrapeConfigRow } from "./scrape-config-repository";

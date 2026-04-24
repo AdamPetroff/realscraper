@@ -1,5 +1,6 @@
 import { ExDrazbyScraper } from "../src/scrapers/ExDrazbyScraper";
 import { buildExDrazbyUrl, type ExDrazbyScraperConfig } from "../src/config";
+import type { ScrapeConfig } from "../src/scrape-configs";
 import {
   getDefaultScrapeConfig,
   getScrapeConfigById,
@@ -8,22 +9,30 @@ import {
   type ParsedManualScrapeArgs,
 } from "./manual-scrape-utils";
 
-function getDefaultExDrazbyConfig(): ExDrazbyScraperConfig {
-  return getDefaultScrapeConfig("exdrazby");
+function getDefaultExDrazbyConfig(
+  scrapes: ScrapeConfig[],
+): ExDrazbyScraperConfig {
+  return getDefaultScrapeConfig(scrapes, "exdrazby");
 }
 
-function getExDrazbyConfigById(id: string): ExDrazbyScraperConfig {
-  return getScrapeConfigById(id, "exdrazby");
+function getExDrazbyConfigById(
+  scrapes: ScrapeConfig[],
+  id: string,
+): ExDrazbyScraperConfig {
+  return getScrapeConfigById(scrapes, id, "exdrazby");
 }
 
-function resolveTarget(args: ParsedManualScrapeArgs): {
+function resolveTarget(
+  args: ParsedManualScrapeArgs,
+  scrapes: ScrapeConfig[],
+): {
   url: string;
   scrapeId?: string;
 } {
   if (args.scrapeId) {
     return {
       scrapeId: args.scrapeId,
-      url: buildExDrazbyUrl(getExDrazbyConfigById(args.scrapeId)),
+      url: buildExDrazbyUrl(getExDrazbyConfigById(scrapes, args.scrapeId)),
     };
   }
 
@@ -34,7 +43,7 @@ function resolveTarget(args: ParsedManualScrapeArgs): {
   }
 
   return {
-    url: buildExDrazbyUrl(getDefaultExDrazbyConfig()),
+    url: buildExDrazbyUrl(getDefaultExDrazbyConfig(scrapes)),
   };
 }
 

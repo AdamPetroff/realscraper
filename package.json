@@ -26,6 +26,7 @@
 		"backfill-idnes-area-from-title": "ts-node --transpile-only scripts/backfill-idnes-area-from-title.ts",
 		"average-price-per-sqm-by-source": "ts-node --transpile-only scripts/average-price-per-sqm-by-source.ts",
 		"log-urls": "ts-node --transpile-only scripts/log-scrape-urls.ts",
+		"seed-scrape-configs": "ts-node --transpile-only scripts/seed-scrape-configs.ts",
 		"deploy": "./scripts/deploy.sh",
 		"env": "./scripts/env.sh",
 		"env:show": "./scripts/env.sh show"

@@ -1,5 +1,6 @@
 import { IdnesScraper } from "../src/scrapers/IdnesScraper";
 import { buildIdnesUrl, type IdnesScraperConfig } from "../src/config";
+import type { ScrapeConfig } from "../src/scrape-configs";
 import {
   getDefaultScrapeConfig,
   getScrapeConfigById,
@@ -8,15 +9,15 @@ import {
   type ParsedManualScrapeArgs,
 } from "./manual-scrape-utils";
 
-function getDefaultIdnesConfig(): IdnesScraperConfig {
-  return getDefaultScrapeConfig("idnes");
+function getDefaultIdnesConfigFromScrapes(scrapes: ScrapeConfig[]): IdnesScraperConfig {
+  return getDefaultScrapeConfig(scrapes, "idnes");
 }
 
-function getIdnesConfigById(id: string): IdnesScraperConfig {
-  return getScrapeConfigById(id, "idnes");
+function getIdnesConfigById(scrapes: ScrapeConfig[], id: string): IdnesScraperConfig {
+  return getScrapeConfigById(scrapes, id, "idnes");
 }
 
-function resolveTarget(args: ParsedManualScrapeArgs): {
+function resolveTarget(args: ParsedManualScrapeArgs, scrapes: ScrapeConfig[]): {
   url: string;
   scrapeId?: string;
   config?: IdnesScraperConfig;
@@ -29,8 +30,8 @@ function resolveTarget(args: ParsedManualScrapeArgs): {
   }
 
   const config = args.scrapeId
-    ? getIdnesConfigById(args.scrapeId)
-    : getDefaultIdnesConfig();
+    ? getIdnesConfigById(scrapes, args.scrapeId)
+    : getDefaultIdnesConfigFromScrapes(scrapes);
 
   return {
     url: buildIdnesUrl(config),

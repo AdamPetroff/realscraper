@@ -1,15 +1,28 @@
-import { SCRAPES, buildUrlForScrape, getEnabledScrapes } from "../src/scrape-configs";
+import "dotenv/config";
+import {
+  initializeSupabase,
+  closeSupabase,
+  loadScrapes,
+} from "../src/db";
+import { buildUrlForScrape, getEnabledScrapes } from "../src/scrape-configs";
 
-function main(): void {
+async function main(): Promise<void> {
+  const dbAvailable = await initializeSupabase();
+  if (!dbAvailable) {
+    throw new Error("Supabase is not available");
+  }
+
+  const scrapes = await loadScrapes();
+
   console.log("\n🔗 All Defined Scrape URLs");
   console.log("═".repeat(80));
 
-  const enabledScrapes = getEnabledScrapes(SCRAPES);
-  const disabledScrapes = SCRAPES.filter((s) => s.enabled === false);
+  const enabledScrapes = getEnabledScrapes(scrapes);
+  const disabledScrapes = scrapes.filter((s) => s.enabled === false);
 
   // Group by type
-  const byType = new Map<string, typeof SCRAPES>();
-  for (const scrape of SCRAPES) {
+  const byType = new Map<string, typeof scrapes>();
+  for (const scrape of scrapes) {
     const list = byType.get(scrape.type) || [];
     list.push(scrape);
     byType.set(scrape.type, list);
@@ -29,10 +42,17 @@ function main(): void {
 
   console.log("\n" + "═".repeat(80));
   console.log(`\n📊 Summary:`);
-  console.log(`   Total:    ${SCRAPES.length} scrapes`);
+  console.log(`   Total:    ${scrapes.length} scrapes`);
   console.log(`   Enabled:  ${enabledScrapes.length}`);
   console.log(`   Disabled: ${disabledScrapes.length}`);
   console.log();
 }
 
-main();
+main()
+  .catch((error) => {
+    console.error("❌ Failed to log scrape URLs:", error);
+    process.exitCode = 1;
+  })
+  .finally(() => {
+    closeSupabase();
+  });

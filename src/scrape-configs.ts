@@ -13,10 +13,6 @@ import {
   buildExDrazbyUrl,
 } from "./config";
 
-// ============================================================================
-// Scraper Configuration Types
-// ============================================================================
-
 export type ScraperType =
   | "idnes"
   | "bezrealitky"
@@ -24,6 +20,7 @@ export type ScraperType =
   | "bazos"
   | "okdrazby"
   | "exdrazby";
+
 const ALL_SCRAPERS: ScraperType[] = [
   "idnes",
   "bezrealitky",
@@ -31,6 +28,13 @@ const ALL_SCRAPERS: ScraperType[] = [
   "bazos",
   "okdrazby",
   "exdrazby",
+];
+const DEFAULT_EXPANDED_SCRAPERS: ScraperType[] = [
+  "idnes",
+  "bezrealitky",
+  "sreality",
+  "bazos",
+  "okdrazby",
 ];
 
 export interface ScrapeLocationConfig {
@@ -49,6 +53,9 @@ export interface ScrapeLocationConfig {
   okdrazby?: {
     regionIds: number[];
     countyIds?: number[];
+  };
+  exdrazby?: {
+    regionIds: number[];
   };
 }
 
@@ -85,10 +92,15 @@ interface BaseSharedScrapeConfig {
     sreality: Partial<SrealityScraperConfig>;
     bazos: Partial<BazosScraperConfig>;
     okdrazby: Partial<OkDrazbyScraperConfig>;
+    exdrazby: Partial<ExDrazbyScraperConfig>;
   }>;
 }
 
 export type SharedScrapeConfig = BaseSharedScrapeConfig;
+
+export interface StoredSharedScrapeConfig extends SharedScrapeConfig {
+  key: string;
+}
 
 interface BaseResolvedScrapeConfig {
   id: string;
@@ -133,10 +145,6 @@ export type ScrapeConfig =
   | BazosScrapeConfig
   | OkDrazbyScrapeConfig
   | ExDrazbyScrapeConfig;
-
-// ============================================================================
-// Shared Definitions
-// ============================================================================
 
 const APARTMENT_LAYOUTS = ["2+1", "2+kk", "3+1", "3+kk"];
 const OK_DRAZBY_ALL_APARTMENT_SUBCATEGORY_IDS = [
@@ -265,11 +273,15 @@ const LOCATIONS = {
     okdrazby: {
       regionIds: [11, 12, 14],
     },
+    exdrazby: {
+      regionIds: [11, 12, 13],
+    },
   },
 } satisfies Record<string, ScrapeLocationConfig>;
 
-export const SHARED_SCRAPES: SharedScrapeConfig[] = [
+export const DEFAULT_STORED_SHARED_SCRAPE_CONFIGS: StoredSharedScrapeConfig[] = [
   {
+    key: createStoredScrapeKey("(3-6M CZK) Brno"),
     label: "(3-6M CZK) Brno",
     search: {
       offerType: "sale",
@@ -290,6 +302,7 @@ export const SHARED_SCRAPES: SharedScrapeConfig[] = [
     },
   },
   {
+    key: createStoredScrapeKey("(3-6M CZK) Olomouc"),
     label: "(3-6M CZK) Olomouc",
     search: {
       offerType: "sale",
@@ -313,6 +326,7 @@ export const SHARED_SCRAPES: SharedScrapeConfig[] = [
     },
   },
   {
+    key: createStoredScrapeKey("(6-8M CZK) Brno"),
     label: "(6-8M CZK) Brno",
     scrapers: ["idnes", "sreality"],
     search: {
@@ -329,6 +343,7 @@ export const SHARED_SCRAPES: SharedScrapeConfig[] = [
     },
   },
   {
+    key: createStoredScrapeKey("(6-8M CZK) Olomouc"),
     label: "(6-8M CZK) Olomouc",
     scrapers: ["idnes", "sreality"],
     search: {
@@ -345,6 +360,7 @@ export const SHARED_SCRAPES: SharedScrapeConfig[] = [
     },
   },
   {
+    key: createStoredScrapeKey("Land (<=2M CZK) Olomouc <=10 km"),
     label: "Land (<=2M CZK) Olomouc <=10 km",
     search: {
       offerType: "sale",
@@ -374,6 +390,7 @@ export const SHARED_SCRAPES: SharedScrapeConfig[] = [
     },
   },
   {
+    key: createStoredScrapeKey("House (5-10M CZK) Olomouc <=10 km"),
     label: "House (5-10M CZK) Olomouc <=10 km",
     search: {
       offerType: "sale",
@@ -404,6 +421,9 @@ export const SHARED_SCRAPES: SharedScrapeConfig[] = [
     },
   },
   {
+    key: createStoredScrapeKey(
+      "Building Land Jihomoravský, Olomoucký, Zlínský kraj",
+    ),
     label: "Building Land Jihomoravský, Olomoucký, Zlínský kraj",
     scrapers: ["okdrazby"],
     search: {
@@ -423,16 +443,77 @@ export const SHARED_SCRAPES: SharedScrapeConfig[] = [
       },
     },
   },
+  {
+    key: createStoredScrapeKey(
+      "Building Land, Houses, Flats Jihomoravský, Olomoucký, Zlínský kraj",
+    ),
+    label: "Building Land, Houses, Flats Jihomoravský, Olomoucký, Zlínský kraj",
+    scrapers: ["exdrazby"],
+    search: {
+      offerType: "sale",
+      propertyKind: "land",
+      location: LOCATIONS.southMoraviaCentralMoraviaZlin,
+      onlyNew: false,
+    },
+    overrides: {
+      exdrazby: {
+        status: "prepared",
+        mainCategoryId: 1,
+        subcategoryIds: [3, 4, 7],
+        perPage: 100,
+      },
+    },
+  },
 ];
 
-// ============================================================================
-// Expansion Helpers
-// ============================================================================
+export function createStoredScrapeKey(label: string): string {
+  return slugify(label);
+}
+
+export function validateStoredSharedScrapeConfig(
+  value: unknown,
+  context = "scrape config",
+): StoredSharedScrapeConfig {
+  if (!value || typeof value !== "object") {
+    throw new Error(`Invalid ${context}: expected object`);
+  }
+
+  const record = value as Partial<StoredSharedScrapeConfig>;
+
+  if (!record.key || typeof record.key !== "string") {
+    throw new Error(`Invalid ${context}: missing key`);
+  }
+
+  if (!record.label || typeof record.label !== "string") {
+    throw new Error(`Invalid ${context}: missing label`);
+  }
+
+  if (!record.search || typeof record.search !== "object") {
+    throw new Error(`Invalid ${context}: missing search config`);
+  }
+
+  if (
+    record.scrapers !== undefined &&
+    (!Array.isArray(record.scrapers) ||
+      record.scrapers.some((scraper) => !ALL_SCRAPERS.includes(scraper as ScraperType)))
+  ) {
+    throw new Error(`Invalid ${context}: scrapers must be a valid scraper list`);
+  }
+
+  return {
+    key: record.key,
+    label: record.label,
+    enabled: record.enabled,
+    scrapers: record.scrapers as ScraperType[] | undefined,
+    search: record.search as SharedScrapeSearchConfig,
+    overrides: record.overrides,
+  };
+}
 
 function resolveScrapers(scrape: SharedScrapeConfig): ScraperType[] {
   return scrape.scrapers && scrape.scrapers.length > 0
     ? scrape.scrapers
-    : ALL_SCRAPERS;
+    : DEFAULT_EXPANDED_SCRAPERS;
 }
 
 function titlePrefix(type: ScraperType): string {
@@ -482,7 +563,7 @@ function toIdnesRooms(layouts?: string[]): string | undefined {
 
   const idnesRooms = layouts
     .map((layout) => mapping[layout])
-    .filter((value): value is string => Boolean(value));
+    .filter((entry): entry is string => Boolean(entry));
 
   return idnesRooms.length > 0 ? idnesRooms.join("|") : undefined;
 }
@@ -503,7 +584,7 @@ function toBezrealitkyDispositions(layouts?: string[]): string[] | undefined {
 
   const dispositions = layouts
     .map((layout) => mapping[layout])
-    .filter((value): value is string => Boolean(value));
+    .filter((entry): entry is string => Boolean(entry));
 
   return dispositions.length > 0 ? dispositions : undefined;
 }
@@ -541,7 +622,6 @@ function toBazosOfferType(
 
 function createIdnesConfig(scrape: SharedScrapeConfig): IdnesScrapeConfig {
   const { search } = scrape;
-
   let config: IdnesScraperConfig;
 
   if (search.propertyKind === "land") {
@@ -829,7 +909,46 @@ function createOkDrazbyConfig(
   };
 }
 
-function expandSharedScrape(shared: SharedScrapeConfig): ScrapeConfig[] {
+function createExDrazbyConfig(
+  scrape: SharedScrapeConfig,
+): ExDrazbyScrapeConfig {
+  const { search } = scrape;
+  const location = search.location.exdrazby;
+
+  if (search.offerType !== "sale") {
+    throw new Error(`ExDrazby only supports sale searches for "${scrape.label}"`);
+  }
+
+  if (!location) {
+    throw new Error(
+      `ExDrazby mapping requires exdrazby location data for "${scrape.label}"`,
+    );
+  }
+
+  const base: ExDrazbyScraperConfig = {
+    status: "prepared",
+    mainCategoryId: 1,
+    regionIds: location.regionIds,
+    perPage: 100,
+  };
+
+  return {
+    id: createScrapeId("exdrazby", scrape.label),
+    type: "exdrazby",
+    label: `${titlePrefix("exdrazby")} ${scrape.label}`,
+    enabled: scrape.enabled,
+    config: {
+      ...base,
+      ...scrape.overrides?.exdrazby,
+      regionIds:
+        scrape.overrides?.exdrazby?.regionIds && scrape.overrides.exdrazby.regionIds.length > 0
+          ? scrape.overrides.exdrazby.regionIds
+          : location.regionIds,
+    },
+  };
+}
+
+export function expandSharedScrape(shared: SharedScrapeConfig): ScrapeConfig[] {
   const scrapes: ScrapeConfig[] = [];
 
   for (const type of resolveScrapers(shared)) {
@@ -849,47 +968,32 @@ function expandSharedScrape(shared: SharedScrapeConfig): ScrapeConfig[] {
       case "okdrazby":
         scrapes.push(createOkDrazbyConfig(shared));
         break;
+      case "exdrazby":
+        scrapes.push(createExDrazbyConfig(shared));
+        break;
     }
   }
 
   return scrapes;
 }
 
-export const SCRAPES: ScrapeConfig[] =
-  [
-    ...SHARED_SCRAPES.flatMap(expandSharedScrape),
-    {
-      id: createScrapeId(
-        "exdrazby",
-        "Building Land, Houses, Flats Jihomoravský, Olomoucký, Zlínský kraj",
-      ),
-      type: "exdrazby",
-      label:
-        "ExDrazby Building Land, Houses, Flats Jihomoravský, Olomoucký, Zlínský kraj",
-      config: {
-        status: "prepared",
-        mainCategoryId: 1,
-        subcategoryIds: [3, 4, 7],
-        regionIds: [11, 12, 13],
-        perPage: 100,
-      },
-    },
-  ];
-
-// ============================================================================
-// Helpers
-// ============================================================================
+export function expandSharedScrapes(sharedScrapes: SharedScrapeConfig[]): ScrapeConfig[] {
+  return sharedScrapes.flatMap(expandSharedScrape);
+}
 
 export function getEnabledScrapes(scrapes: ScrapeConfig[]): ScrapeConfig[] {
-  return scrapes.filter((s) => s.enabled !== false);
+  return scrapes.filter((scrape) => scrape.enabled !== false);
 }
 
 export function getScraperTypes(scrapes: ScrapeConfig[]): Set<ScraperType> {
-  return new Set(scrapes.map((s) => s.type));
+  return new Set(scrapes.map((scrape) => scrape.type));
 }
 
-export function getScrapeById(id: string): ScrapeConfig | undefined {
-  return SCRAPES.find((scrape) => scrape.id === id);
+export function getScrapeById(
+  scrapes: ScrapeConfig[],
+  id: string,
+): ScrapeConfig | undefined {
+  return scrapes.find((scrape) => scrape.id === id);
 }
 
 export function buildUrlForScrape(scrape: ScrapeConfig): string {
@@ -909,13 +1013,13 @@ export function buildUrlForScrape(scrape: ScrapeConfig): string {
   }
 }
 
-export function logActiveScrapes(): void {
-  const scrapes = getEnabledScrapes(SCRAPES);
+export function logActiveScrapes(scrapes: ScrapeConfig[]): void {
+  const enabledScrapes = getEnabledScrapes(scrapes);
 
   console.log("\n📋 Active scrape configurations (runs every 10 minutes):");
   console.log("─".repeat(60));
 
-  for (const scrape of scrapes) {
+  for (const scrape of enabledScrapes) {
     console.log(`  • ${scrape.label} [${scrape.id}]`);
     console.log(`    ${buildUrlForScrape(scrape)}`);
   }

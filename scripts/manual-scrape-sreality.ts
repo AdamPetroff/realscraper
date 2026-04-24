@@ -1,5 +1,6 @@
 import { SrealityScraper } from "../src/scrapers/SrealityScraper";
 import { buildSrealityUrl, type SrealityScraperConfig } from "../src/config";
+import type { ScrapeConfig } from "../src/scrape-configs";
 import {
   getDefaultScrapeConfig,
   getScrapeConfigById,
@@ -8,26 +9,32 @@ import {
   type ParsedManualScrapeArgs,
 } from "./manual-scrape-utils";
 
-function getDefaultSrealityConfig(): SrealityScraperConfig {
+function getDefaultSrealityConfig(scrapes: ScrapeConfig[]): SrealityScraperConfig {
   return {
-    ...getDefaultScrapeConfig("sreality"),
+    ...getDefaultScrapeConfig(scrapes, "sreality"),
     age: "tyden",
   };
 }
 
-function getSrealityConfigById(id: string): SrealityScraperConfig {
+function getSrealityConfigById(
+  scrapes: ScrapeConfig[],
+  id: string,
+): SrealityScraperConfig {
   return {
-    ...getScrapeConfigById(id, "sreality"),
+    ...getScrapeConfigById(scrapes, id, "sreality"),
     age: "dnes",
   };
 }
 
-function resolveTarget(args: ParsedManualScrapeArgs): {
+function resolveTarget(
+  args: ParsedManualScrapeArgs,
+  scrapes: ScrapeConfig[],
+): {
   url: string;
   options: { newOnly?: boolean };
 } {
   if (args.scrapeId) {
-    const config = getSrealityConfigById(args.scrapeId);
+    const config = getSrealityConfigById(scrapes, args.scrapeId);
 
     return {
       url: buildSrealityUrl(config),
@@ -46,7 +53,7 @@ function resolveTarget(args: ParsedManualScrapeArgs): {
     };
   }
 
-  const config = getDefaultSrealityConfig();
+  const config = getDefaultSrealityConfig(scrapes);
 
   return {
     url: buildSrealityUrl(config),
