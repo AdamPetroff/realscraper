@@ -1,10 +1,11 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { DEFAULT_MORTGAGE_ESTIMATE_CONFIG } from "../config";
 import {
   calculateMonthlyMortgagePayment,
   canEstimateMortgage,
   formatMonthlyMortgageEstimate,
 } from "../mortgage-estimate";
+import { logPropertySummary } from "../../scripts/manual-scrape-utils";
 import { TelegramService } from "../telegram-service";
 import type { Property } from "../types";
 
@@ -61,6 +62,30 @@ describe("mortgage estimate helpers", () => {
         financedShare: 1.1,
       })
     ).toBeUndefined();
+  });
+});
+
+describe("manual scrape mortgage logging", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("includes the mortgage estimate for standard sale listings", () => {
+    const logSpy = vi.spyOn(console, "log").mockImplementation(() => undefined);
+
+    logPropertySummary(createProperty(), 0);
+
+    expect(logSpy).toHaveBeenCalledWith(
+      "Mortgage estimate: 23\u00a0339 Kč/měs."
+    );
+  });
+
+  it("omits the mortgage estimate for auction listings", () => {
+    const logSpy = vi.spyOn(console, "log").mockImplementation(() => undefined);
+
+    logPropertySummary(createProperty({ source: "okdrazby" }), 0);
+
+    expect(logSpy).toHaveBeenCalledWith("Mortgage estimate: N/A");
   });
 });
 

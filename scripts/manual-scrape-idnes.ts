@@ -1,98 +1,52 @@
 import { IdnesScraper } from "../src/scrapers/IdnesScraper";
+import { buildIdnesUrl, type IdnesScraperConfig } from "../src/config";
 import {
-  buildIdnesUrl,
-  type IdnesScraperConfig,
-} from "../src/config";
-import { Property } from "../src/types";
-import {
-  SCRAPES,
-  getScrapeById,
-  type IdnesScrapeConfig,
-} from "../src/scrape-configs";
+  getDefaultScrapeConfig,
+  getScrapeConfigById,
+  logPropertySummary,
+  runManualScrape,
+  type ParsedManualScrapeArgs,
+} from "./manual-scrape-utils";
 
 function getDefaultIdnesConfig(): IdnesScraperConfig {
-  const scrape = SCRAPES.find(
-    (entry): entry is IdnesScrapeConfig => entry.type === "idnes"
-  );
-
-  if (!scrape) {
-    throw new Error("No IDNES scrape config found in SCRAPES");
-  }
-
-  return { ...scrape.config };
+  return getDefaultScrapeConfig("idnes");
 }
 
 function getIdnesConfigById(id: string): IdnesScraperConfig {
-  const scrape = getScrapeById(id);
-
-  if (!scrape) {
-    throw new Error(`Unknown scrape ID "${id}"`);
-  }
-
-  if (scrape.type !== "idnes") {
-    throw new Error(`Scrape ID "${id}" is for ${scrape.type}, not idnes`);
-  }
-
-  return { ...scrape.config };
+  return getScrapeConfigById(id, "idnes");
 }
 
-async function logProperty(property: Property, index: number): Promise<void> {
-  console.log(`\n=== Property ${index + 1} ===`);
-  console.log(`Title: ${property.title || "N/A"}`);
-  console.log(`Price: ${property.price || "N/A"}`);
-  console.log(`Location: ${property.location || "N/A"}`);
-  console.log(`District (Okres): ${property.district || "N/A"}`);
-  console.log(`Region (Kraj): ${property.region || "N/A"}`);
-  console.log(`Area: ${property.area || "N/A"}`);
-  console.log(
-    `Price per m²: ${
-      typeof property.pricePerSqm === "number"
-        ? `${new Intl.NumberFormat("cs-CZ").format(property.pricePerSqm)} Kč/m²`
-        : "N/A"
-    }`
-  );
-  console.log(`Rooms: ${property.rooms || "N/A"}`);
-  console.log(`URL: ${property.url || "N/A"}`);
-  console.log(`Images: ${property.images?.length || 0}`);
-  console.log(`Image 1: ${property.images?.[0] || "N/A"}`);
-  if (property.description) {
-    console.log(
-      `Description: ${property.description.substring(0, 100)}${
-        property.description.length > 100 ? "..." : ""
-      }`
-    );
+function resolveTarget(args: ParsedManualScrapeArgs): {
+  url: string;
+  scrapeId?: string;
+  config?: IdnesScraperConfig;
+} {
+  if (args.urlArg) {
+    return {
+      url: args.urlArg,
+      scrapeId: args.scrapeId,
+    };
   }
+
+  const config = args.scrapeId
+    ? getIdnesConfigById(args.scrapeId)
+    : getDefaultIdnesConfig();
+
+  return {
+    url: buildIdnesUrl(config),
+    scrapeId: args.scrapeId,
+    config,
+  };
 }
 
-async function main(): Promise<void> {
-  const scraper = new IdnesScraper();
+function logSearchParameters(config: IdnesScraperConfig | undefined): void {
+  if (!config) {
+    console.log("Search parameters: direct URL");
+    return;
+  }
 
-  try {
-    console.log("Initializing scraper...");
-    await scraper.initialize();
-    const rawArgs = process.argv.slice(2);
-    const idFlagIndex = rawArgs.indexOf("--id");
-    const idFromFlag =
-      idFlagIndex >= 0 ? rawArgs[idFlagIndex + 1] : undefined;
-    const positionalArg = rawArgs.find((arg) => !arg.startsWith("--"));
-    const scrapeId =
-      idFromFlag ?? (positionalArg && getScrapeById(positionalArg) ? positionalArg : undefined);
-    const urlArg = positionalArg && scrapeId !== positionalArg ? positionalArg : undefined;
-
-    const config = urlArg
-      ? undefined
-      : ({
-          ...(scrapeId ? getIdnesConfigById(scrapeId) : getDefaultIdnesConfig()),
-        } satisfies IdnesScraperConfig);
-    const url = urlArg ?? buildIdnesUrl(config!);
-    console.log(`\nScraping URL: ${url}`);
-    if (scrapeId) {
-      console.log(`Scrape ID: ${scrapeId}`);
-    }
-    if (!config) {
-      console.log("Search parameters: direct URL");
-    } else if (config.propertyKind === "land") {
-      console.log(`Search parameters:
+  if (config.propertyKind === "land") {
+    console.log(`Search parameters:
       - Property kind: land
       - City: ${config.city}
       - Land subtype: ${config.landSubtype}
@@ -102,8 +56,11 @@ async function main(): Promise<void> {
       - Room count filter: ${typeof config.roomCount === "number" ? config.roomCount : "N/A"}
       ${config.freshness ? `- Freshness: ${config.freshness}` : ""}
     `);
-    } else if (config.propertyKind === "house") {
-      console.log(`Search parameters:
+    return;
+  }
+
+  if (config.propertyKind === "house") {
+    console.log(`Search parameters:
       - Property kind: house
       - City/region: ${config.city}
       - House subtype: ${config.houseSubtype || "N/A"}
@@ -116,8 +73,10 @@ async function main(): Promise<void> {
       - Materials: ${config.material || "N/A"}
       ${config.freshness ? `- Freshness: ${config.freshness}` : ""}
     `);
-    } else {
-      console.log(`Search parameters:
+    return;
+  }
+
+  console.log(`Search parameters:
       - Property kind: apartment
       - Price range: ${config.priceMin.toLocaleString()} - ${config.priceMax.toLocaleString()} CZK
       - City: ${config.city}
@@ -128,36 +87,39 @@ async function main(): Promise<void> {
       - Room count filter: ${config.roomCount}
       ${config.freshness ? `- Freshness: ${config.freshness}` : ""}
     `);
-    }
+}
 
-    const properties = await scraper.scrapeProperties(url);
-
-    console.log(`\n🏠 Found ${properties.length} properties:`);
-
-    if (properties.length === 0) {
-      console.log("No properties found. This might mean:");
-      console.log("- The website structure has changed");
-      console.log("- The search criteria are too restrictive");
-      console.log(
-        "- The website requires additional authentication or has anti-bot measures"
-      );
-      console.log(
-        "\nTry adjusting the search parameters in the config object."
-      );
-    } else {
-      console.log(properties);
-      for (let i = 0; i < properties.length; i++) {
-        await logProperty(properties[i], i);
+async function main(): Promise<void> {
+  await runManualScrape({
+    sourceName: "IDNES",
+    errorLabel: "IDNES",
+    createScraper: () => new IdnesScraper(),
+    initialize: (scraper) => scraper.initialize(),
+    resolveTarget,
+    scrape: (scraper, target) => scraper.scrapeProperties(target.url),
+    close: (scraper) => scraper.close(),
+    logTarget: (target) => {
+      console.log("Initializing scraper...");
+      console.log(`\nScraping URL: ${target.url}`);
+      if (target.scrapeId) {
+        console.log(`Scrape ID: ${target.scrapeId}`);
       }
-
-      console.log(`\n✅ Successfully scraped ${properties.length} properties`);
-    }
-  } catch (error) {
-    console.error("❌ Error running scraper:", error);
-    process.exit(1);
-  } finally {
-    await scraper.close();
-  }
+      logSearchParameters(target.config as IdnesScraperConfig | undefined);
+    },
+    emptyState: [
+      "No properties found. This might mean:",
+      "- The website structure has changed",
+      "- The search criteria are too restrictive",
+      "- The website requires additional authentication or has anti-bot measures",
+      "",
+      "Try adjusting the search parameters in the config object.",
+    ],
+    successMessage: (count) => `Successfully scraped ${count} properties`,
+    logProperty: (property, index) =>
+      logPropertySummary(property, index, {
+        detail: "short",
+      }),
+  });
 }
 
 if (require.main === module) {
