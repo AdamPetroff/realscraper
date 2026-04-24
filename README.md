@@ -177,6 +177,7 @@ Records price changes over time for historical tracking.
 4. **Message Format**: Sends formatted Telegram message with:
    - Property count (new and price changes separately)
    - Title, price, location
+   - Estimated monthly mortgage payment in CZK for standard sale listings
    - Price change indicator (📉 or 📈) for changed prices
    - Area, room count, description (when available)
    - Direct links to listings
@@ -218,6 +219,13 @@ export const DEFAULT_IDNES_CONFIG: IdnesScraperConfig = {
 };
 
 // Bezrealitky configuration
+
+// Mortgage estimate defaults used in Telegram notifications
+export const DEFAULT_MORTGAGE_ESTIMATE_CONFIG = {
+  annualInterestRatePercent: 4.7,
+  financedShare: 0.9,
+  loanTermYears: 30,
+};
 export const DEFAULT_BEZREALITKY_CONFIG: BezrealitkyScraperConfig = {
   dispositions: ["DISP_2_1", "DISP_2_KK", "DISP_3_1", "DISP_3_KK"],
   estateType: "BYT",

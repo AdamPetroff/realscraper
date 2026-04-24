@@ -7,6 +7,18 @@ import {
 
 type IdnesFreshness = "today" | "week" | "month";
 
+export interface MortgageEstimateConfig {
+  annualInterestRatePercent: number;
+  financedShare: number;
+  loanTermYears: number;
+}
+
+export const DEFAULT_MORTGAGE_ESTIMATE_CONFIG: MortgageEstimateConfig = {
+  annualInterestRatePercent: 4.7,
+  financedShare: 0.9,
+  loanTermYears: 30,
+};
+
 export interface IdnesApartmentScraperConfig {
   propertyKind: "apartment";
   priceMin: number;

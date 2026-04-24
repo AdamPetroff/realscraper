@@ -1,4 +1,6 @@
 import TelegramBot from "node-telegram-bot-api";
+import { DEFAULT_MORTGAGE_ESTIMATE_CONFIG } from "./config";
+import { formatMonthlyMortgageEstimate } from "./mortgage-estimate";
 import type { Property, PropertyWithPriceChange, ScrapeResult } from "./types";
 
 export class TelegramService {
@@ -197,6 +199,14 @@ export class TelegramService {
 
     if (pricePerSqm) {
       lines.push(`📊 ${this.escapeHtml(pricePerSqm)}`);
+    }
+
+    const mortgageEstimate = formatMonthlyMortgageEstimate(
+      property,
+      DEFAULT_MORTGAGE_ESTIMATE_CONFIG
+    );
+    if (mortgageEstimate) {
+      lines.push(`🏦 ${this.escapeHtml(mortgageEstimate)}`);
     }
 
     if (formattedArea) {
