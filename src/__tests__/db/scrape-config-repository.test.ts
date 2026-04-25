@@ -9,7 +9,10 @@ import {
   loadScrapes,
   seedScrapeConfigs,
 } from "../../db/scrape-config-repository";
-import { type StoredSharedScrapeConfig } from "../../scrape-configs";
+import {
+  createStoredScrapeKey,
+  type StoredSharedScrapeConfig,
+} from "../../scrape-configs";
 
 const TEST_PREFIX = `test_scrape_config_${Date.now()}`;
 
@@ -98,9 +101,10 @@ describe("Scrape Config Repository - Database Integration Tests", () => {
 
     await seedScrapeConfigs(configs);
     const scrapes = await loadScrapes();
+    const expectedLabelSlug = createStoredScrapeKey(`${TEST_PREFIX} ExDrazby`);
 
     const exdrazbyScrape = scrapes.find(
-      (scrape) => scrape.id === `exdrazby-${TEST_PREFIX}-exdrazby`,
+      (scrape) => scrape.id === `exdrazby-${expectedLabelSlug}`,
     );
 
     expect(exdrazbyScrape).toBeDefined();

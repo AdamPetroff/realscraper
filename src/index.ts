@@ -1,5 +1,6 @@
 import "dotenv/config";
 import { PropertyScheduler } from "./scheduler";
+import { startWebServer } from "./web/server";
 
 async function main(): Promise<void> {
   // Validate environment variables
@@ -23,8 +24,11 @@ async function main(): Promise<void> {
   });
 
   const scheduler = new PropertyScheduler(telegramToken, chatId);
+  const port = parsePort(process.env.PORT);
+  let webServer: Awaited<ReturnType<typeof startWebServer>> | undefined;
 
   try {
+    webServer = await startWebServer(port, "0.0.0.0", scheduler);
     await scheduler.initialize();
 
     // Check if we should run immediately (for testing)
@@ -39,12 +43,19 @@ async function main(): Promise<void> {
 
     console.log("✅ Bot is running. Press Ctrl+C to stop.");
 
-    // Keep the process running
-    process.on("SIGINT", async () => {
+    const shutdown = async () => {
       console.log("\n🛑 Shutting down gracefully...");
+      if (webServer) {
+        await new Promise<void>((resolve) => {
+          webServer?.close(() => resolve());
+        });
+      }
       await scheduler.close();
       process.exit(0);
-    });
+    };
+
+    process.on("SIGINT", shutdown);
+    process.on("SIGTERM", shutdown);
 
     // Keep process alive
     setInterval(() => {
@@ -52,9 +63,24 @@ async function main(): Promise<void> {
     }, 60000);
   } catch (error) {
     console.error("❌ Failed to start bot:", error);
+    if (webServer) {
+      await new Promise<void>((resolve) => {
+        webServer?.close(() => resolve());
+      });
+    }
     await scheduler.close();
     process.exit(1);
   }
+}
+
+function parsePort(value: string | undefined): number {
+  const port = Number(value ?? "3000");
+
+  if (!Number.isInteger(port) || port < 1 || port > 65535) {
+    throw new Error(`Invalid PORT value: ${value}`);
+  }
+
+  return port;
 }
 
 if (require.main === module) {

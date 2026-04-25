@@ -59,6 +59,12 @@ export interface ScrapeLocationConfig {
   };
 }
 
+export interface KnownLocationDefinition {
+  key: string;
+  propertyKinds: SharedPropertyKind[];
+  location: ScrapeLocationConfig;
+}
+
 export type SharedOfferType = "sale" | "rent";
 export type SharedPropertyKind = "apartment" | "land" | "house";
 export type SharedFreshness = "today" | "week" | "month";
@@ -169,7 +175,7 @@ const IDNES_ALL_HOUSE_CONDITIONS = [
   "after-reconstruction",
 ];
 
-const LOCATIONS = {
+export const LOCATIONS = {
   brno: {
     label: "Brno",
     idnesCity: "brno",
@@ -278,6 +284,49 @@ const LOCATIONS = {
     },
   },
 } satisfies Record<string, ScrapeLocationConfig>;
+
+const KNOWN_LOCATION_DEFINITIONS: KnownLocationDefinition[] = [
+  {
+    key: "brno-apartment",
+    propertyKinds: ["apartment"],
+    location: LOCATIONS.brno,
+  },
+  {
+    key: "breclav-apartment-house",
+    propertyKinds: ["apartment", "house"],
+    location: LOCATIONS.breclav,
+  },
+  {
+    key: "hodonin-apartment-house",
+    propertyKinds: ["apartment", "house"],
+    location: LOCATIONS.hodonin,
+  },
+  {
+    key: "breclav-hodonin",
+    propertyKinds: ["apartment", "house", "land"],
+    location: LOCATIONS.breclavHodonin,
+  },
+  {
+    key: "olomouc-apartment",
+    propertyKinds: ["apartment"],
+    location: LOCATIONS.olomoucApartment,
+  },
+  {
+    key: "olomouc-land",
+    propertyKinds: ["land"],
+    location: LOCATIONS.olomoucLand,
+  },
+  {
+    key: "olomouc-house",
+    propertyKinds: ["house"],
+    location: LOCATIONS.olomoucHouse,
+  },
+  {
+    key: "south-moravia-central-moravia-zlin",
+    propertyKinds: ["land", "house", "apartment"],
+    location: LOCATIONS.southMoraviaCentralMoraviaZlin,
+  },
+];
 
 export const DEFAULT_STORED_SHARED_SCRAPE_CONFIGS: StoredSharedScrapeConfig[] = [
   {
@@ -468,6 +517,28 @@ export const DEFAULT_STORED_SHARED_SCRAPE_CONFIGS: StoredSharedScrapeConfig[] = 
 
 export function createStoredScrapeKey(label: string): string {
   return slugify(label);
+}
+
+export function listKnownLocationDefinitions(): KnownLocationDefinition[] {
+  return KNOWN_LOCATION_DEFINITIONS.map((definition) => ({
+    ...definition,
+    location: structuredClone(definition.location),
+  }));
+}
+
+export function findKnownLocationForSrealityImport(
+  locationSlug: string,
+  propertyKind: SharedPropertyKind,
+): ScrapeLocationConfig | null {
+  const normalizedSlug = locationSlug.replace(/^\/+|\/+$/g, "");
+
+  const match = KNOWN_LOCATION_DEFINITIONS.find(
+    (definition) =>
+      definition.propertyKinds.includes(propertyKind) &&
+      definition.location.srealityLocationSlug === normalizedSlug,
+  );
+
+  return match ? structuredClone(match.location) : null;
 }
 
 export function validateStoredSharedScrapeConfig(

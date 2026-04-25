@@ -10,12 +10,14 @@ import {
 import { TelegramService } from "./telegram-service";
 import type { Property, PropertyWithPriceChange, ScrapeResult } from "./types";
 import {
+  expandSharedScrape,
   getEnabledScrapes,
   getScraperTypes,
   buildUrlForScrape,
   logActiveScrapes,
   type ScrapeConfig,
   type ScraperType,
+  type StoredSharedScrapeConfig,
 } from "./scrape-configs";
 import {
   initializeSupabase,
@@ -24,6 +26,28 @@ import {
   processProperties,
 } from "./db";
 import { filterPropertiesByTitleBlacklist } from "./property-filters";
+
+export interface PreviewScrapeItem {
+  title: string;
+  price: string;
+  location: string;
+  area?: string;
+  rooms: string;
+  source?: string;
+  sourceId?: string;
+  url: string;
+}
+
+export interface PreviewScrapeResult {
+  id: string;
+  label: string;
+  type: ScraperType;
+  url: string;
+  returnedCount: number;
+  filteredOutCount: number;
+  properties: PreviewScrapeItem[];
+  error?: string;
+}
 
 type ScraperInstance =
   | IdnesScraper
@@ -63,46 +87,11 @@ export class PropertyScheduler {
 
     const neededScrapers = getScraperTypes(enabledScrapes);
 
-    // Initialize only the scrapers we need
-    const initPromises: Promise<void>[] = [];
-
-    if (neededScrapers.has("idnes")) {
-      const scraper = new IdnesScraper();
-      this.scrapers.set("idnes", scraper);
-      initPromises.push(scraper.initialize());
-    }
-
-    if (neededScrapers.has("bezrealitky")) {
-      const scraper = new BezrealitkyScraper();
-      this.scrapers.set("bezrealitky", scraper);
-      initPromises.push(scraper.initialize());
-    }
-
-    if (neededScrapers.has("sreality")) {
-      const scraper = new SrealityScraper({}, this.telegram);
-      this.scrapers.set("sreality", scraper);
-      initPromises.push(scraper.initialize());
-    }
-
-    if (neededScrapers.has("bazos")) {
-      const scraper = new BazosScraper();
-      this.scrapers.set("bazos", scraper);
-      initPromises.push(scraper.initialize());
-    }
-
-    if (neededScrapers.has("okdrazby")) {
-      const scraper = new OkDrazbyScraper();
-      this.scrapers.set("okdrazby", scraper);
-      initPromises.push(scraper.initialize());
-    }
-
-    if (neededScrapers.has("exdrazby")) {
-      const scraper = new ExDrazbyScraper();
-      this.scrapers.set("exdrazby", scraper);
-      initPromises.push(scraper.initialize());
-    }
-
-    await Promise.all(initPromises);
+    await Promise.all(
+      Array.from(neededScrapers).map((scraperType) =>
+        this.ensureScraper(scraperType),
+      ),
+    );
 
     const scraperNames = Array.from(neededScrapers)
       .map((s) => s.charAt(0).toUpperCase() + s.slice(1))
@@ -137,6 +126,40 @@ export class PropertyScheduler {
 
   async runScrape(): Promise<void> {
     await this.runScrapes(getEnabledScrapes(this.scrapes), "scheduled");
+  }
+
+  async reloadScrapes(): Promise<void> {
+    this.scrapes = await loadScrapes();
+    const neededScrapers = getScraperTypes(getEnabledScrapes(this.scrapes));
+
+    await Promise.all(
+      Array.from(neededScrapers).map((scraperType) =>
+        this.ensureScraper(scraperType),
+      ),
+    );
+
+    logActiveScrapes(this.scrapes);
+  }
+
+  async runPreviewScrape(
+    sharedConfig: StoredSharedScrapeConfig,
+    scraperType?: ScraperType,
+  ): Promise<PreviewScrapeResult[]> {
+    const scrapes = expandSharedScrape(sharedConfig).filter(
+      (scrape) => !scraperType || scrape.type === scraperType,
+    );
+
+    if (scraperType && scrapes.length === 0) {
+      throw new Error(`Scrape config does not expand to scraper "${scraperType}"`);
+    }
+
+    const results: PreviewScrapeResult[] = [];
+    for (const scrape of scrapes) {
+      await this.ensureScraper(scrape.type);
+      results.push(await this.executePreviewScrape(scrape));
+    }
+
+    return results;
   }
 
   private async runScrapes(
@@ -186,6 +209,7 @@ export class PropertyScheduler {
       console.log(`🔍 [${label}] Scraping ${type} URL: ${url}`);
 
       let properties: Property[];
+      await this.ensureScraper(type);
 
       switch (type) {
         case "idnes": {
@@ -282,6 +306,135 @@ export class PropertyScheduler {
         skippedCount: 0,
       };
     }
+  }
+
+  private async executePreviewScrape(
+    scrape: ScrapeConfig,
+  ): Promise<PreviewScrapeResult> {
+    const { type, label, config } = scrape;
+    const url = buildUrlForScrape(scrape);
+
+    try {
+      console.log(`🔎 [preview:${label}] Scraping ${type} URL: ${url}`);
+
+      let properties: Property[];
+
+      switch (type) {
+        case "idnes": {
+          const scraper = this.scrapers.get("idnes") as IdnesScraper;
+          properties = await scraper.scrapeProperties(url);
+          break;
+        }
+
+        case "bezrealitky": {
+          const scraper = this.scrapers.get(
+            "bezrealitky"
+          ) as BezrealitkyScraper;
+          properties = await scraper.scrapeProperties(url, {
+            newOnly: false,
+          });
+          break;
+        }
+
+        case "sreality": {
+          const scraper = this.scrapers.get("sreality") as SrealityScraper;
+          properties = await scraper.scrapeProperties(url, {
+            newOnly: false,
+          });
+          break;
+        }
+
+        case "bazos": {
+          const scraper = this.scrapers.get("bazos") as BazosScraper;
+          properties = await scraper.scrapeProperties(url, {
+            newOnly: false,
+          });
+          break;
+        }
+
+        case "okdrazby": {
+          const scraper = this.scrapers.get("okdrazby") as OkDrazbyScraper;
+          properties = await scraper.scrapeProperties(url);
+          break;
+        }
+
+        case "exdrazby": {
+          const scraper = this.scrapers.get("exdrazby") as ExDrazbyScraper;
+          properties = await scraper.scrapeProperties(url);
+          break;
+        }
+      }
+
+      const returnedCount = properties.length;
+      const { filteredProperties, filteredOutCount } =
+        filterPropertiesByTitleBlacklist(properties);
+
+      return {
+        id: scrape.id,
+        label,
+        type,
+        url,
+        returnedCount,
+        filteredOutCount,
+        properties: filteredProperties.map((property) => ({
+          title: property.title,
+          price: property.price,
+          location: property.location,
+          area: property.area,
+          rooms: property.rooms,
+          source: property.source,
+          sourceId: property.sourceId,
+          url: property.url,
+        })),
+      };
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Unknown preview scrape error";
+      console.error(`❌ [preview:${label}] Error during ${type} scrape:`, error);
+
+      return {
+        id: scrape.id,
+        label,
+        type,
+        url,
+        returnedCount: 0,
+        filteredOutCount: 0,
+        properties: [],
+        error: message,
+      };
+    }
+  }
+
+  private async ensureScraper(type: ScraperType): Promise<void> {
+    if (this.scrapers.has(type)) {
+      return;
+    }
+
+    let scraper: ScraperInstance;
+
+    switch (type) {
+      case "idnes":
+        scraper = new IdnesScraper();
+        break;
+      case "bezrealitky":
+        scraper = new BezrealitkyScraper();
+        break;
+      case "sreality":
+        scraper = new SrealityScraper({}, this.telegram);
+        break;
+      case "bazos":
+        scraper = new BazosScraper();
+        break;
+      case "okdrazby":
+        scraper = new OkDrazbyScraper();
+        break;
+      case "exdrazby":
+        scraper = new ExDrazbyScraper();
+        break;
+    }
+
+    this.scrapers.set(type, scraper);
+    await scraper.initialize();
   }
 
   // For testing - run scrape immediately
