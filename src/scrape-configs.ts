@@ -859,6 +859,8 @@ function createSrealityConfig(
           category: "pozemky/stavebni-parcely",
           locationSlug,
           age: toSrealityAge(search.freshness),
+          priceMin: search.priceMin,
+          priceMax: search.priceMax,
           newOnly: search.onlyNew,
           extraParams: {
             ...(typeof search.pricePerSqmMin === "number"

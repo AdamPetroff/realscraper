@@ -31,7 +31,7 @@ function resolveTarget(
   scrapes: ScrapeConfig[],
 ): {
   url: string;
-  options: { newOnly?: boolean };
+  options: { newOnly?: boolean; priceMin?: number; priceMax?: number };
 } {
   if (args.scrapeId) {
     const config = getSrealityConfigById(scrapes, args.scrapeId);
@@ -40,6 +40,8 @@ function resolveTarget(
       url: buildSrealityUrl(config),
       options: {
         newOnly: config.newOnly,
+        priceMin: config.priceMin,
+        priceMax: config.priceMax,
       },
     };
   }
@@ -59,6 +61,8 @@ function resolveTarget(
     url: buildSrealityUrl(config),
     options: {
       newOnly: config.newOnly,
+      priceMin: config.priceMin,
+      priceMax: config.priceMax,
     },
   };
 }

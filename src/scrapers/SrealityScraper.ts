@@ -6,6 +6,8 @@ import type { ScrapeOptions } from "./scraper.interface";
 
 type SrealityScrapeOptions = ScrapeOptions & {
   newOnly?: boolean;
+  priceMin?: number;
+  priceMax?: number;
 };
 
 interface SrealityLocality {
@@ -239,10 +241,39 @@ export class SrealityScraper {
         continue;
       }
 
+      if (!this.matchesPriceRange(property, options)) {
+        continue;
+      }
+
       properties.push(property);
     }
 
     return properties;
+  }
+
+  private matchesPriceRange(
+    property: Property,
+    options: SrealityScrapeOptions
+  ): boolean {
+    const { priceMin, priceMax } = options;
+
+    if (typeof priceMin !== "number" && typeof priceMax !== "number") {
+      return true;
+    }
+
+    if (typeof property.priceNumeric !== "number") {
+      return false;
+    }
+
+    if (typeof priceMin === "number" && property.priceNumeric < priceMin) {
+      return false;
+    }
+
+    if (typeof priceMax === "number" && property.priceNumeric > priceMax) {
+      return false;
+    }
+
+    return true;
   }
 
   private transformEstate(estate: SrealityEstate): Property | null {

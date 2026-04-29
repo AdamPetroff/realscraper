@@ -232,6 +232,8 @@ export class PropertyScheduler {
           const scraper = this.scrapers.get("sreality") as SrealityScraper;
           properties = await scraper.scrapeProperties(url, {
             newOnly: config.newOnly,
+            priceMin: config.priceMin,
+            priceMax: config.priceMax,
           });
           break;
         }
@@ -340,6 +342,8 @@ export class PropertyScheduler {
           const scraper = this.scrapers.get("sreality") as SrealityScraper;
           properties = await scraper.scrapeProperties(url, {
             newOnly: false,
+            priceMin: config.priceMin,
+            priceMax: config.priceMax,
           });
           break;
         }

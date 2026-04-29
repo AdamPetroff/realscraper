@@ -46,6 +46,20 @@ describe("config url builders", () => {
     );
   });
 
+  it("builds a Sreality land search URL with total price filters when no per-sqm override is used", () => {
+    const config: SrealityScraperConfig = {
+      offerType: "prodej",
+      category: "pozemky/stavebni-parcely",
+      locationSlug: "olomoucky-kraj",
+      priceMin: 0,
+      priceMax: 2_000_000,
+    };
+
+    expect(buildSrealityUrl(config)).toBe(
+      "https://www.sreality.cz/hledani/prodej/pozemky/stavebni-parcely/olomoucky-kraj?cena-od=0&cena-do=2000000"
+    );
+  });
+
   it("builds a Bezrealitky land search URL without apartment dispositions", () => {
     const config: BezrealitkyScraperConfig = {
       estateType: "POZEMEK",
