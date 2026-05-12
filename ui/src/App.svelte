@@ -197,18 +197,28 @@
   }
 
   function toInputValue(value: unknown): string {
-    return typeof value === "number" ? String(value) : "";
+    if (typeof value === "number" || typeof value === "string") {
+      return String(value);
+    }
+
+    return "";
   }
 
   function joinNumberList(value: unknown): string {
     return Array.isArray(value) ? value.join(", ") : "";
   }
 
-  function parseOptionalNumber(value: string): number | undefined {
-    if (!value.trim()) return undefined;
-    const parsed = Number(value);
+  function parseOptionalNumber(value: unknown): number | undefined {
+    if (value === undefined || value === null || value === "") {
+      return undefined;
+    }
+
+    const normalized = String(value).trim();
+    if (!normalized) return undefined;
+
+    const parsed = Number(normalized);
     if (!Number.isFinite(parsed)) {
-      throw new Error(`"${value}" is not a valid number`);
+      throw new Error(`"${normalized}" is not a valid number`);
     }
     return parsed;
   }

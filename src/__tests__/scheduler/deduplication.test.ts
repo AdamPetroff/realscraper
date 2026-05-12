@@ -16,7 +16,11 @@ vi.mock("../../db/supabase", () => ({
 
 // Import after mocking
 import * as supabaseModule from "../../db/supabase";
-import { processProperty, processProperties } from "../../db/property-repository";
+import {
+  processProperty,
+  processProperties,
+  recordPriceChange,
+} from "../../db/property-repository";
 
 // Helper to create test properties
 function createProperty(overrides: Partial<Property> = {}): Property {
@@ -154,6 +158,49 @@ describe("Deduplication Logic", () => {
 
       expect(mockSupabase.from).toHaveBeenCalledWith("properties");
       expect(mockSupabase.update).toHaveBeenCalled();
+    });
+
+    it("should treat decimal scraped prices as unchanged when they round to stored integer", async () => {
+      const existingProperty = {
+        id: "uuid-123",
+        source: "sreality",
+        source_id: "12345678",
+        price_numeric: 1288578,
+        price_formatted: "1 288 577,7 Kč",
+      };
+
+      mockSupabase.single.mockResolvedValueOnce({
+        data: existingProperty,
+        error: null,
+      });
+
+      const property = createProperty({
+        source: "sreality",
+        price: "1 288 577,7 Kč",
+        priceNumeric: 1288577.7,
+      });
+
+      const result = await processProperty(property);
+
+      expect(result).toBeNull();
+      expect(mockSupabase.insert).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("recordPriceChange", () => {
+    it("should round decimal prices before inserting integer history values", async () => {
+      const success = await recordPriceChange(
+        "uuid-123",
+        "1 288 577,7 Kč",
+        1288577.7
+      );
+
+      expect(success).toBe(true);
+      expect(mockSupabase.insert).toHaveBeenCalledWith({
+        property_id: "uuid-123",
+        price_formatted: "1 288 577,7 Kč",
+        price_numeric: 1288578,
+      });
     });
   });
 

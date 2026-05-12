@@ -159,7 +159,7 @@ export async function recordPriceChange(
   const { error } = await supabase.from("price_history").insert({
     property_id: propertyId,
     price_formatted: priceFormatted,
-    price_numeric: priceNumeric,
+    price_numeric: normalizeIntegerForDb(priceNumeric),
   });
 
   if (error) {
@@ -240,7 +240,7 @@ export async function processProperty(
 
   // Property exists - check for price change
   const oldPrice = existing.price_numeric;
-  const newPrice = property.priceNumeric ?? null;
+  const newPrice = normalizeIntegerForDb(property.priceNumeric);
 
   // If we can't compare prices (one or both null), just update last_seen
   if (oldPrice === null || newPrice === null || oldPrice === newPrice) {
