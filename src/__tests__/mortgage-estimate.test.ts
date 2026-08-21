@@ -33,12 +33,12 @@ describe("mortgage estimate helpers", () => {
           DEFAULT_MORTGAGE_ESTIMATE_CONFIG
         ) ?? 0
       )
-    ).toBe(23339);
+    ).toBe(23583);
   });
 
   it("formats the monthly payment in CZK", () => {
     expect(formatMonthlyMortgageEstimate(createProperty())).toBe(
-      "23\u00a0339 Kč/měs."
+      "23\u00a0583 Kč/měs."
     );
   });
 
@@ -76,7 +76,7 @@ describe("manual scrape mortgage logging", () => {
     logPropertySummary(createProperty(), 0);
 
     expect(logSpy).toHaveBeenCalledWith(
-      "Mortgage estimate: 23\u00a0339 Kč/měs."
+      "Mortgage estimate: 23\u00a0583 Kč/měs."
     );
   });
 
@@ -94,7 +94,7 @@ describe("TelegramService mortgage caption formatting", () => {
     const service = new TelegramService("token", "chat-id");
     const caption = service["formatPropertyCaption"](createProperty(), 0);
 
-    expect(caption).toContain("🏦 23\u00a0339 Kč/měs.");
+    expect(caption).toContain("🏦 23\u00a0583 Kč/měs.");
   });
 
   it("omits the mortgage estimate for auction listings", () => {

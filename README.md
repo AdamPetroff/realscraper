@@ -222,7 +222,7 @@ export const DEFAULT_IDNES_CONFIG: IdnesScraperConfig = {
 
 // Mortgage estimate defaults used in Telegram notifications
 export const DEFAULT_MORTGAGE_ESTIMATE_CONFIG = {
-  annualInterestRatePercent: 4.7,
+  annualInterestRatePercent: 4.79,
   financedShare: 0.9,
   loanTermYears: 30,
 };

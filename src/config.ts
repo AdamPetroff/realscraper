@@ -14,7 +14,7 @@ export interface MortgageEstimateConfig {
 }
 
 export const DEFAULT_MORTGAGE_ESTIMATE_CONFIG: MortgageEstimateConfig = {
-  annualInterestRatePercent: 4.7,
+  annualInterestRatePercent: 4.79,
   financedShare: 0.9,
   loanTermYears: 30,
 };
